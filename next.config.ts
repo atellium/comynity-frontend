@@ -10,6 +10,16 @@ const apiOrigin = (() => {
   }
 })();
 
+const r2UploadOrigin = (() => {
+  try {
+    return process.env.NEXT_PUBLIC_R2_UPLOAD_ORIGIN
+      ? new URL(process.env.NEXT_PUBLIC_R2_UPLOAD_ORIGIN).origin
+      : "";
+  } catch {
+    return "";
+  }
+})();
+
 const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
@@ -20,7 +30,7 @@ const contentSecurityPolicy = [
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data:",
 	"img-src 'self' data: blob: https://media.comynity.com https://pub-f3d16aa17c8b46af8ec3b0a6a3681646.r2.dev https://api.qrserver.com https://images.unsplash.com",
-  `connect-src 'self'${apiOrigin ? ` ${apiOrigin}` : ""}`,
+  `connect-src 'self'${apiOrigin ? ` ${apiOrigin}` : ""}${r2UploadOrigin ? ` ${r2UploadOrigin}` : ""}`,
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   ...(process.env.NODE_ENV === "production" ? ["upgrade-insecure-requests"] : []),
