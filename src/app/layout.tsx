@@ -25,13 +25,29 @@ export const metadata: Metadata = {
 		title: "Comynity",
 		description: "Discover trusted local businesses and services near you.",
 		url: "/",
-		images: ["/opengraph-image"],
+		images: [
+			{
+				url: "/app-icons/icon-1024X1024.png",
+				width: 1024,
+				height: 1024,
+				alt: "Comynity app icon",
+				type: "image/png",
+			},
+		],
 	},
 	twitter: {
 		card: "summary_large_image",
 		title: "Comynity",
 		description: "Discover trusted local businesses and services near you.",
-		images: ["/opengraph-image"],
+		images: [
+			{
+				url: "/app-icons/icon-1024X1024.png",
+				width: 1024,
+				height: 1024,
+				alt: "Comynity app icon",
+				type: "image/png",
+			},
+		],
 	},
 	manifest: "/manifest.webmanifest",
 	appleWebApp: {
