@@ -3,6 +3,17 @@ import type { BusinessCategoryOption, BusinessCityOption, BusinessGalleryRespons
 import type { CatalogCategorySearchResponse, CatalogGalleryResponse, CatalogPayload } from "./catalog.types";
 import type { BusinessOfferResponse, BusinessOffersResponse } from "./offer.types";
 
+function normalizeOwnedBusinessInfo(business: NonNullable<OwnedBusinessInfoResponse["result"]>) {
+  return {
+    ...business,
+    seo: business.seo ?? {
+      title: null,
+      description: null,
+      keywords: null,
+    },
+  };
+}
+
 export async function getOwnedBusinesses() {
   const { data } = await protectedApiClient.get<OwnedBusinessesResponse>(
     "/api/businesses/mine/",
@@ -62,13 +73,13 @@ export async function getOwnedBusinessInfo(slug: string) {
     `/api/businesses/mine/${encodeURIComponent(slug)}/`,
   );
   if (!data.result) throw new Error("Business not found.");
-  return data.result;
+  return normalizeOwnedBusinessInfo(data.result);
 }
 
 export async function updateOwnedBusiness(slug: string, payload: BusinessUpdatePayload | FormData) {
   const { data } = await protectedApiClient.patch<OwnedBusinessInfoResponse>(`/api/businesses/mine/${encodeURIComponent(slug)}/`, payload);
   if (!data.result) throw new Error("Business update returned no result.");
-  return data.result;
+  return normalizeOwnedBusinessInfo(data.result);
 }
 
 export async function updateBusinessHours(slug: string, payload: BusinessHoursUpdatePayload) {
