@@ -51,6 +51,9 @@ function OwnedBusinessCard({ business }: { business: OwnedBusiness }) {
           <span className={`shrink-0 rounded-full px-2 py-0.5 text-[9px] font-extrabold capitalize ${isPublished ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{business.publication_status.replaceAll("_", " ")}</span>
         </div>
         <p className="mt-1 truncate text-xs font-semibold text-foreground-muted">{category}</p>
+        <span className="mt-1.5 inline-flex w-fit rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-extrabold text-brand">
+          Validity: Life time
+        </span>
       </div>
     </div>
     <div className="mt-2.5 grid grid-cols-3 gap-1.5 border-t border-slate-100 pt-2.5">
