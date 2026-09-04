@@ -4,7 +4,7 @@ import { getBusinessNameBySlug } from "@/features/businesses/business.service";
 import { getSiteUrl } from "@/lib/site-url";
 
 const appIconImage = {
-  url: "/app-icons/icon-1024X1024.png",
+  url: new URL("/app-icons/icon-1024X1024.png", getSiteUrl()).toString(),
   width: 1024,
   height: 1024,
   alt: "Comynity app icon",
