@@ -16,6 +16,8 @@ const title = "Discover Local Businesses & Services Near You | Comynity";
 const description =
 	"Discover trusted local businesses, services, shops, and professionals near you. Explore popular categories and connect with businesses in your community.";
 
+const appIconUrl = new URL("/app-icons/icon-1024X1024.png", getSiteUrl()).toString();
+
 export const metadata: Metadata = {
 	title: { absolute: title },
 	description,
@@ -53,10 +55,11 @@ export const metadata: Metadata = {
 		locale: "en_IN",
 		images: [
 			{
-				url: "/opengraph-image",
-				width: 1200,
-				height: 630,
-				alt: "Comynity local business discovery platform",
+				url: appIconUrl,
+				width: 1024,
+				height: 1024,
+				alt: "Comynity app icon",
+				type: "image/png",
 			},
 		],
 	},
@@ -64,7 +67,15 @@ export const metadata: Metadata = {
 		card: "summary_large_image",
 		title,
 		description,
-		images: ["/opengraph-image"],
+		images: [
+			{
+				url: appIconUrl,
+				width: 1024,
+				height: 1024,
+				alt: "Comynity app icon",
+				type: "image/png",
+			},
+		],
 	},
 };
 

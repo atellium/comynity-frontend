@@ -10,6 +10,8 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 	subsets: ["latin"],
 });
 
+const appIconUrl = new URL("/app-icons/icon-1024X1024.png", getSiteUrl()).toString();
+
 export const metadata: Metadata = {
 	metadataBase: getSiteUrl(),
 	title: {
@@ -25,13 +27,29 @@ export const metadata: Metadata = {
 		title: "Comynity",
 		description: "Discover trusted local businesses and services near you.",
 		url: "/",
-		images: ["/opengraph-image"],
+		images: [
+			{
+				url: appIconUrl,
+				width: 1024,
+				height: 1024,
+				alt: "Comynity app icon",
+				type: "image/png",
+			},
+		],
 	},
 	twitter: {
 		card: "summary_large_image",
 		title: "Comynity",
 		description: "Discover trusted local businesses and services near you.",
-		images: ["/opengraph-image"],
+		images: [
+			{
+				url: appIconUrl,
+				width: 1024,
+				height: 1024,
+				alt: "Comynity app icon",
+				type: "image/png",
+			},
+		],
 	},
 	manifest: "/manifest.webmanifest",
 	appleWebApp: {
