@@ -10,6 +10,8 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 	subsets: ["latin"],
 });
 
+const appIconUrl = new URL("/app-icons/icon-1024X1024.png", getSiteUrl()).toString();
+
 export const metadata: Metadata = {
 	metadataBase: getSiteUrl(),
 	title: {
@@ -27,7 +29,7 @@ export const metadata: Metadata = {
 		url: "/",
 		images: [
 			{
-				url: "/app-icons/icon-1024X1024.png",
+				url: appIconUrl,
 				width: 1024,
 				height: 1024,
 				alt: "Comynity app icon",
@@ -41,7 +43,7 @@ export const metadata: Metadata = {
 		description: "Discover trusted local businesses and services near you.",
 		images: [
 			{
-				url: "/app-icons/icon-1024X1024.png",
+				url: appIconUrl,
 				width: 1024,
 				height: 1024,
 				alt: "Comynity app icon",
