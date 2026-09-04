@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileHeader from "@/components/layout/MobileHeader";
 import { compressImage } from "@/lib/compress-image";
-import { createBusinessOffer, getBusinessOffers, getOwnedBusinessInfo, updateBusinessOffer } from "../profile.service";
+import { createBusinessOffer, getBusinessOffers, getOwnedBusinessInfo, updateBusinessOffer, uploadBusinessOfferImage } from "../profile.service";
 
 const inputClass = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal outline-none focus:border-brand";
 
@@ -14,6 +14,7 @@ export function BusinessOfferEditorScreen({ businessSlug, offerId }: { businessS
   const router = useRouter();
   const queryClient = useQueryClient();
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const createdOfferIdRef = useRef<string | null>(null);
   const business = useQuery({ queryKey: ["businesses", "mine", businessSlug], queryFn: () => getOwnedBusinessInfo(businessSlug) });
   const offers = useQuery({ queryKey: ["business-offers", businessSlug], queryFn: () => getBusinessOffers(businessSlug), enabled: editing });
   const offer = offers.data?.find((item) => item.id === offerId);
@@ -38,13 +39,19 @@ export function BusinessOfferEditorScreen({ businessSlug, offerId }: { businessS
   }, [initialized, offer]);
   useEffect(() => () => { if (imagePreview) URL.revokeObjectURL(imagePreview); }, [imagePreview]);
 
-  const save = useMutation({ mutationFn: (payload: FormData) => editing ? updateBusinessOffer(businessSlug, offerId!, payload) : createBusinessOffer(businessSlug, payload), onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["business-offers", businessSlug] }); router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/offers`); }, onError: () => setError("Unable to save the offer. Please check the form and try again.") });
+  const save = useMutation({ mutationFn: async (payload: FormData) => {
+    const existingOfferId = offerId ?? createdOfferIdRef.current;
+    const savedOffer = existingOfferId ? await updateBusinessOffer(businessSlug, existingOfferId, payload) : await createBusinessOffer(businessSlug, payload);
+    createdOfferIdRef.current = savedOffer.id;
+    if (imageFile) await uploadBusinessOfferImage(businessSlug, savedOffer.id, imageFile);
+    return savedOffer;
+  }, onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["business-offers", businessSlug] }); router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/offers`); }, onError: () => setError("Unable to save the offer. Please check the form and try again.") });
 
   async function selectImage(event: ChangeEvent<HTMLInputElement>) {
     const selected = event.target.files?.[0]; event.target.value = ""; if (!selected) return;
     setPreparingImage(true); setError(null);
     try {
-      const compressed = await compressImage(selected, { maxWidth: 1024, quality: 0.95 });
+      const compressed = await compressImage(selected, { maxWidth: 1600, quality: 0.95 });
       if (imagePreview) URL.revokeObjectURL(imagePreview);
       setImageFile(compressed); setImagePreview(URL.createObjectURL(compressed));
     } catch (compressionError) {
@@ -65,7 +72,6 @@ export function BusinessOfferEditorScreen({ businessSlug, offerId }: { businessS
     payload.append("title", title.trim()); payload.append("description", description.trim());
     payload.append("starts_at", new Date(`${startsAt}T00:00:00`).toISOString()); payload.append("expires_at", new Date(`${expiresAt}T23:59:59.999`).toISOString());
     payload.append("is_active", String(active)); payload.append("terms", JSON.stringify(terms.map((term) => term.trim()).filter(Boolean)));
-    if (imageFile) payload.append("image", imageFile);
     save.mutate(payload);
   }
 
