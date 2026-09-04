@@ -33,6 +33,17 @@ export function NearbyBusinesses() {
       ? query.error.message
       : "Unable to load nearby businesses.";
 
+  if (
+    hydrated &&
+    lat !== null &&
+    lng !== null &&
+    !query.isPending &&
+    !query.isError &&
+    businesses.length === 0
+  ) {
+    return null;
+  }
+
   return (
     <section
       className="mx-auto w-full max-w-5xl pb-6"
@@ -86,19 +97,6 @@ export function NearbyBusinesses() {
           >
             Try again
           </button>
-        </div>
-      ) : businesses.length === 0 ? (
-        <div className="mx-page rounded-2xl border border-border-subtle bg-surface p-8 text-center shadow-xs">
-          <i
-            className="fa-solid fa-store-slash text-2xl text-foreground-subtle"
-            aria-hidden="true"
-          />
-          <p className="mt-3 text-sm font-extrabold text-foreground">
-            No nearby businesses found
-          </p>
-          <p className="mt-1 text-xs font-medium text-foreground-muted">
-            Try changing your location.
-          </p>
         </div>
       ) : (
         <div
