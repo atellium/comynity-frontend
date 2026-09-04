@@ -49,6 +49,21 @@ export type BusinessGalleryResponse = {
   results: BusinessGalleryImage[] | null;
 };
 
+export type BusinessGalleryUploadTicket = {
+  id: string;
+  upload_url: string;
+  content_type: string;
+  expires_in: number;
+};
+
+export type BusinessGalleryUpload = {
+  id: string;
+  status: "pending" | "processing" | "ready" | "failed";
+  error: string;
+  image: BusinessGalleryImage | null;
+  asset_url?: string | null;
+};
+
 export type BusinessCategoryOption = { id: number; name: string; display_name: string; label: string; slug: string };
 export type BusinessCityOption = { id: number; name: string; slug: string; tier: number; state: { id: number; name: string; slug: string; code: string } };
 export type BusinessUpdatePayload = Partial<{

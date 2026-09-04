@@ -1,6 +1,6 @@
 import { protectedApiClient } from "@/lib/api";
-import type { BusinessCategoryOption, BusinessCityOption, BusinessGalleryResponse, BusinessHoursUpdatePayload, BusinessUpdatePayload, OwnedBusinessInfoResponse, OwnedBusinessesResponse } from "./profile.types";
-import type { CatalogCategorySearchResponse, CatalogGalleryResponse, CatalogPayload } from "./catalog.types";
+import type { BusinessCategoryOption, BusinessCityOption, BusinessGalleryImage, BusinessGalleryResponse, BusinessGalleryUpload, BusinessGalleryUploadTicket, BusinessHoursUpdatePayload, BusinessUpdatePayload, OwnedBusinessInfoResponse, OwnedBusinessesResponse } from "./profile.types";
+import type { CatalogCategorySearchResponse, CatalogGalleryImage, CatalogGalleryResponse, CatalogImageUpload, CatalogImageUploadTicket, CatalogPayload } from "./catalog.types";
 import type { BusinessOfferResponse, BusinessOffersResponse } from "./offer.types";
 
 function normalizeOwnedBusinessInfo(business: NonNullable<OwnedBusinessInfoResponse["result"]>) {
@@ -68,6 +68,38 @@ export async function updateCatalogImages(businessSlug: string, catalogSlug: str
   return data.results ?? [];
 }
 
+function catalogImageUploadsUrl(businessSlug: string, catalogSlug: string) {
+  return `${catalogImagesUrl(businessSlug, catalogSlug)}uploads/`;
+}
+
+export async function uploadCatalogImage(businessSlug: string, catalogSlug: string, file: File): Promise<CatalogGalleryImage> {
+  const baseUrl = catalogImageUploadsUrl(businessSlug, catalogSlug);
+  const { data: ticket } = await protectedApiClient.post<CatalogImageUploadTicket>(baseUrl, { content_type: file.type });
+  const response = await fetch(ticket.upload_url, { method: "PUT", headers: { "Content-Type": ticket.content_type }, body: file });
+  if (!response.ok) throw new Error("Direct product image upload failed.");
+  await protectedApiClient.post(`${baseUrl}${ticket.id}/complete/`);
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const { data } = await protectedApiClient.get<CatalogImageUpload>(`${baseUrl}${ticket.id}/`);
+    if (data.status === "ready" && data.image) return data.image;
+    if (data.status === "failed") throw new Error(data.error || "Product image processing failed.");
+    await wait(750);
+  }
+  throw new Error("Product image processing is taking longer than expected.");
+}
+
+export async function uploadCatalogImages(businessSlug: string, catalogSlug: string, files: File[]) {
+  const results: CatalogGalleryImage[] = new Array(files.length);
+  let nextIndex = 0;
+  async function worker() {
+    while (nextIndex < files.length) {
+      const index = nextIndex++;
+      results[index] = await uploadCatalogImage(businessSlug, catalogSlug, files[index]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(3, files.length) }, () => worker()));
+  return results;
+}
+
 export async function getOwnedBusinessInfo(slug: string) {
   const { data } = await protectedApiClient.get<OwnedBusinessInfoResponse>(
     `/api/businesses/mine/${encodeURIComponent(slug)}/`,
@@ -101,6 +133,75 @@ export async function getBusinessGallery(slug: string) {
 export async function updateBusinessGallery(slug: string, payload: FormData) {
   const { data } = await protectedApiClient.patch<BusinessGalleryResponse>(businessGalleryUrl(slug), payload);
   return data.results ?? [];
+}
+
+function businessGalleryUploadsUrl(slug: string) {
+  return `${businessGalleryUrl(slug)}uploads/`;
+}
+
+function wait(milliseconds: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+}
+
+export async function uploadBusinessGalleryImage(slug: string, file: File): Promise<BusinessGalleryImage> {
+  const { data: ticket } = await protectedApiClient.post<BusinessGalleryUploadTicket>(
+    businessGalleryUploadsUrl(slug),
+    { content_type: file.type },
+  );
+  const uploadResponse = await fetch(ticket.upload_url, {
+    method: "PUT",
+    headers: { "Content-Type": ticket.content_type },
+    body: file,
+  });
+  if (!uploadResponse.ok) throw new Error("Direct image upload failed.");
+  await protectedApiClient.post(`${businessGalleryUploadsUrl(slug)}${ticket.id}/complete/`);
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const { data } = await protectedApiClient.get<BusinessGalleryUpload>(
+      `${businessGalleryUploadsUrl(slug)}${ticket.id}/`,
+    );
+    if (data.status === "ready" && data.image) return data.image;
+    if (data.status === "failed") throw new Error(data.error || "Image processing failed.");
+    await wait(750);
+  }
+  throw new Error("Image processing is taking longer than expected. Refresh the gallery shortly.");
+}
+
+export async function uploadBusinessGalleryImages(slug: string, files: File[]) {
+  const results: BusinessGalleryImage[] = new Array(files.length);
+  let nextIndex = 0;
+  async function worker() {
+    while (nextIndex < files.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      results[index] = await uploadBusinessGalleryImage(slug, files[index]);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(3, files.length) }, () => worker()));
+  return results;
+}
+
+async function uploadBusinessAsset(slug: string, file: File, initiateUrl: string) {
+  const { data: ticket } = await protectedApiClient.post<BusinessGalleryUploadTicket>(initiateUrl, { content_type: file.type });
+  const response = await fetch(ticket.upload_url, { method: "PUT", headers: { "Content-Type": ticket.content_type }, body: file });
+  if (!response.ok) throw new Error("Direct image upload failed.");
+  const statusUrl = `${businessGalleryUploadsUrl(slug)}${ticket.id}/`;
+  await protectedApiClient.post(`${statusUrl}complete/`);
+  for (let attempt = 0; attempt < 80; attempt += 1) {
+    const { data } = await protectedApiClient.get<BusinessGalleryUpload>(statusUrl);
+    if (data.status === "ready") return data;
+    if (data.status === "failed") throw new Error(data.error || "Image processing failed.");
+    await wait(750);
+  }
+  throw new Error("Image processing is taking longer than expected.");
+}
+
+export async function uploadBusinessThumbnail(slug: string, file: File) {
+  await uploadBusinessAsset(slug, file, `/api/businesses/mine/${encodeURIComponent(slug)}/thumbnail/uploads/`);
+  return getOwnedBusinessInfo(slug);
+}
+
+export async function uploadBusinessOfferImage(slug: string, offerId: string, file: File) {
+  return uploadBusinessAsset(slug, file, `${businessOffersUrl(slug)}${encodeURIComponent(offerId)}/image/uploads/`);
 }
 
 function businessOffersUrl(slug: string) {
