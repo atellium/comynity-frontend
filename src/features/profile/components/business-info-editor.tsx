@@ -7,7 +7,7 @@ import { FullScreenModal } from "@/components/modals";
 import { searchBusinessCategories, searchBusinessCities, updateBusinessHours, updateOwnedBusiness } from "../profile.service";
 import type { BusinessCategoryOption, BusinessCityOption, BusinessHoursUpdatePayload, BusinessUpdatePayload, OwnedBusinessInfo } from "../profile.types";
 
-export type BusinessInfoSection = "basic" | "categories" | "address" | "contact" | "social" | "hours" | "seo";
+export type BusinessInfoSection = "basic" | "categories" | "address" | "contact" | "social" | "hours";
 const inputClass = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal outline-none focus:border-brand";
 const scheduleDays = [
   { key: "monday", label: "Monday" },
@@ -31,7 +31,6 @@ export function BusinessInfoEditor({ section, business, onClose, onSaved }: { se
     address: business.location.address ?? "", landmark: business.location.landmark ?? "", locality: business.location.locality, postal_code: business.location.postal_code,
     phone: localPhone(business.contact.phone), whatsapp: localPhone(business.contact.whatsapp), email: business.contact.email, website: business.contact.website,
     facebook: business.contact.social_urls?.facebook ?? "", instagram: business.contact.social_urls?.instagram ?? "", youtube: business.contact.social_urls?.youtube ?? "", linkedin: business.contact.social_urls?.linkedin ?? "", x: business.contact.social_urls?.x ?? "",
-    seo_title: business.seo.title ?? "", seo_description: business.seo.description ?? "", seo_keywords: business.seo.keywords ?? "",
   });
   const [categories, setCategories] = useState<BusinessCategoryOption[]>((business.categories ?? []).filter((item) => item.id !== undefined).map((item) => ({ id: item.id!, name: item.display_name, display_name: item.display_name, label: item.display_name, slug: item.slug })));
   const [city, setCity] = useState<BusinessCityOption | null>(cityValue ? { id: cityValue.id ?? 0, name: cityValue.name, slug: "", tier: 0, state: { id: cityValue.state_id ?? 0, name: cityValue.state ?? "", slug: "", code: "" } } : null);
@@ -75,8 +74,7 @@ export function BusinessInfoEditor({ section, business, onClose, onSaved }: { se
     else if (section === "categories") payload = { categories: categories.map((item) => item.id) };
     else if (section === "address") payload = { address: values.address, landmark: values.landmark, locality: values.locality, city: city?.id, postal_code: values.postal_code, display_full_address: fullAddress };
     else if (section === "contact") payload = { phone: indianPhone(values.phone), whatsapp: indianPhone(values.whatsapp), email: values.email, website: values.website, alternate_numbers: alternateNumbers.map(indianPhone).filter(Boolean) };
-    else if (section === "social") payload = { social_urls: Object.fromEntries(["facebook", "instagram", "youtube", "linkedin", "x"].filter((key) => values[key]?.trim()).map((key) => [key, values[key].trim()])) };
-    else payload = { seo_title: values.seo_title, seo_description: values.seo_description, seo_keywords: values.seo_keywords };
+    else payload = { social_urls: Object.fromEntries(["facebook", "instagram", "youtube", "linkedin", "x"].filter((key) => values[key]?.trim()).map((key) => [key, values[key].trim()])) };
     mutation.mutate({ type: "business", payload });
   }
 
@@ -87,7 +85,6 @@ export function BusinessInfoEditor({ section, business, onClose, onSaved }: { se
     {section === "contact" && <>{phoneField("phone", "Phone")}{phoneField("whatsapp", "WhatsApp")}<div><p className="mb-2 text-xs font-bold">Alternate numbers</p><div className="space-y-2">{alternateNumbers.map((number, index) => <div key={index} className="flex gap-2"><div className="flex h-11 min-w-0 flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-brand"><span className="flex items-center border-r border-slate-100 px-3 text-sm font-semibold text-slate-500">+91</span><input type="tel" inputMode="numeric" maxLength={10} value={number} onChange={(event) => setAlternateNumbers(alternateNumbers.map((item, itemIndex) => itemIndex === index ? event.target.value.replace(/\D/g, "").slice(0, 10) : item))} className="min-w-0 flex-1 px-3 text-sm font-normal outline-none" /></div><button type="button" aria-label={`Remove alternate number ${index + 1}`} onClick={() => setAlternateNumbers(alternateNumbers.filter((_, itemIndex) => itemIndex !== index))} className="size-11 shrink-0 rounded-xl bg-red-50 text-danger"><i className="fa-solid fa-xmark" /></button></div>)}</div>{alternateNumbers.length < 4 && <button type="button" onClick={() => setAlternateNumbers([...alternateNumbers, ""])} className="mt-2 text-xs font-extrabold text-brand"><i className="fa-solid fa-plus mr-1" />Add number</button>}</div>{field("email", "Email", "email")}{field("website", "Website", "url")}</>}
     {section === "social" && <>{field("facebook", "Facebook", "url")}{field("instagram", "Instagram", "url")}{field("youtube", "YouTube", "url")}{field("linkedin", "LinkedIn", "url")}{field("x", "X", "url")}</>}
     {section === "hours" && <><Switch label="Show business hours" checked={showHours} onChange={setShowHours} />{showHours && <BusinessHoursEditor value={hoursByDay} onChange={setHoursByDay} />}</>}
-    {section === "seo" && <>{field("seo_title", "Page title")}<label className="block text-xs font-bold"><span className="mb-1.5 block">Description</span><textarea value={values.seo_description} onChange={(event) => setValues((current) => ({ ...current, seo_description: event.target.value }))} rows={4} className="w-full rounded-xl border border-slate-200 p-3 text-sm font-normal" /></label>{field("seo_keywords", "Keywords")}</>}
   </section>{error && <p role="alert" className="text-sm font-semibold text-danger">{error}</p>}<button type="submit" disabled={mutation.isPending} className="h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-60">{mutation.isPending ? "Saving…" : "Save changes"}</button></form></div></FullScreenModal>;
 }
 
@@ -181,4 +178,4 @@ function Switch({ label, checked, onChange }: { label: string; checked: boolean;
 function localPhone(value: string | null | undefined) { const digits = (value ?? "").replace(/\D/g, ""); return digits.startsWith("91") && digits.length > 10 ? digits.slice(2, 12) : digits.slice(0, 10); }
 function indianPhone(value: string) { const digits = value.replace(/\D/g, "").slice(0, 10); return digits ? `+91${digits}` : ""; }
 function timeInputValue(value: string) { return value.match(/(\d{2}:\d{2})/)?.[1] ?? value; }
-function sectionTitle(section: BusinessInfoSection) { return `Edit ${section === "seo" ? "Search information" : section.charAt(0).toUpperCase() + section.slice(1)}`; }
+function sectionTitle(section: BusinessInfoSection) { return `Edit ${section.charAt(0).toUpperCase() + section.slice(1)}`; }

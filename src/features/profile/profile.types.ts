@@ -36,7 +36,9 @@ export type OwnedBusinessInfo = Omit<OwnedBusiness, "hours" | "media"> & {
   };
 };
 
-export type OwnedBusinessInfoResponse = { result: OwnedBusinessInfo | null };
+export type OwnedBusinessInfoResponse = {
+  result: (Omit<OwnedBusinessInfo, "seo"> & { seo: OwnedBusinessInfo["seo"] | null }) | null;
+};
 
 export type BusinessGalleryImage = {
   id: string;
