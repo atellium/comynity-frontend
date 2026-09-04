@@ -51,6 +51,16 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "media.comynity.com",
+        pathname: "/media/categories/businesses/**",
+      },
+      {
+        protocol: "https",
+        hostname: "media.comynity.com",
+        pathname: "/media/categories/catalogs/**",
+      },
+      {
+        protocol: "https",
         hostname: "pub-f3d16aa17c8b46af8ec3b0a6a3681646.r2.dev",
         pathname: "/media/businesses/thumbnails/**",
       },

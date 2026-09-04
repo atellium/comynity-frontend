@@ -10,11 +10,12 @@ import type { OwnedBusiness } from "../profile.types";
 export function MyBusinesses() {
   const { data, isPending, isError, refetch, isFetching } = useQuery({ queryKey: ["businesses", "mine"], queryFn: getOwnedBusinesses });
 
+  if (!isPending && !isError && data?.results.length === 0) return null;
+
   return <section className="mt-5" aria-labelledby="my-businesses-heading">
     <h2 id="my-businesses-heading" className="mb-3 text-base font-extrabold text-foreground">My businesses</h2>
     {isPending && <BusinessListSkeleton />}
     {isError && <div role="alert" className="rounded-2xl border border-red-100 bg-red-50 p-4 text-sm text-danger"><p className="font-semibold">Couldn&apos;t load your businesses.</p><button type="button" onClick={() => void refetch()} disabled={isFetching} className="mt-2 font-extrabold underline disabled:opacity-60">{isFetching ? "Trying again…" : "Try again"}</button></div>}
-    {!isPending && !isError && data?.results.length === 0 && <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center"><span className="mx-auto flex size-10 items-center justify-center rounded-full bg-brand-50 text-brand" aria-hidden="true"><i className="fa-solid fa-store" /></span><p className="mt-3 text-sm font-extrabold text-foreground">No businesses yet</p><p className="mt-1 text-xs text-foreground-muted">Businesses you own will appear here.</p></div>}
     {data && data.results.length > 0 && <div className="flex flex-col divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)]">{data.results.map((business) => <OwnedBusinessCard key={business.id} business={business} />)}</div>}
   </section>;
 }
