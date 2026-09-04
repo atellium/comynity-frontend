@@ -8,6 +8,7 @@ export type BusinessHoursStatus = {
   status: "open" | "closing_soon" | "closed";
   next_closing_time: string | null;
   remark: string | null;
+  schedule?: BusinessSchedule;
 };
 
 export type BusinessCity = string | {
