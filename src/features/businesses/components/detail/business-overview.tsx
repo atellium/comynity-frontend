@@ -8,7 +8,7 @@ import Link from "next/link";
 import { BottomSheetModal } from "@/components/modals";
 import { getBusinesses } from "../../business.service";
 import type { BusinessNameDetail, BusinessScheduleSlot } from "../../business.types";
-import { getBusinessCityName } from "../../business.utils";
+import { getBusinessCityName, hasDisplayableBusinessHours } from "../../business.utils";
 import { BusinessProductsSection } from "./business-products";
 import { BusinessOffersSection } from "./business-offers";
 import { BusinessGallery } from "./business-gallery";
@@ -84,6 +84,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
 	const primaryCategory = business.categories?.[0];
 	const categories = (business.categories ?? []).map((category) => category.display_name).join(" · ");
 	const { location, hours } = business;
+	const showHours = hasDisplayableBusinessHours(hours);
 	const similarBusinessesQuery = useQuery({
 		queryKey: ["businesses", "similar", business.id, primaryCategory?.slug],
 		queryFn: () => getBusinesses({ lat: location.coordinates.latitude, lng: location.coordinates.longitude, category: primaryCategory?.slug, page: 1 }),
@@ -94,7 +95,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
 		? [location.address, location.landmark, location.locality, location.city.name, location.city.state, location.postal_code]
 		: [location.locality, location.city.name]
 	).filter(Boolean).join(", ");
-  const status = hours ? statusDetails[hours.status] : null;
+  const status = showHours && hours ? statusDetails[hours.status] : null;
   const directionHref = location.display_full_address && Number.isFinite(location.coordinates.latitude) && Number.isFinite(location.coordinates.longitude)
     ? `https://www.google.com/maps/dir/?api=1&destination=${location.coordinates.latitude},${location.coordinates.longitude}`
     : undefined;
@@ -162,7 +163,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
 						<span>{address}</span>
 					</p>
 				)}
-        {hours && status && (
+        {showHours && hours && status && (
 					<button type="button" onClick={() => setHoursOpen(true)} className="mt-3 flex w-full items-center gap-2 text-left text-sm font-semibold text-foreground-secondary dark:text-foreground-dark-secondary" aria-haspopup="dialog">
 						<Clock size={16} className={`shrink-0 ${status.className}`} aria-hidden="true" />
 						<span className={status.className}>{status.label}</span>
@@ -263,7 +264,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
         </div>
       </div>
 
-			{hours && (
+			{showHours && hours && (
 				<BottomSheetModal open={hoursOpen} onClose={() => setHoursOpen(false)} title="Business hours" closeLabel="Close business hours">
 					<div className="px-page pt-3 pb-5">
 						<h2 className="text-xl font-extrabold text-foreground dark:text-foreground-dark">Business hours</h2>

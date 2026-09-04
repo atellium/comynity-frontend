@@ -7,7 +7,7 @@ import { useState } from "react";
 import { BottomSheetModal } from "@/components/modals";
 import { SaveButton } from "@/features/saved-items";
 import type { BusinessListItem } from "../business.types";
-import { getBusinessCityName } from "../business.utils";
+import { getBusinessCityName, hasDisplayableBusinessHours } from "../business.utils";
 
 function digits(value: string) {
 	return value.replace(/\D/g, "");
@@ -51,7 +51,7 @@ export function BusinessCard({ business }: { business: BusinessListItem }) {
 		.filter(Boolean)
 		.join(", ");
 	const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${business.location.coordinates.latitude},${business.location.coordinates.longitude}`;
-	const businessHours = business.hours;
+	const businessHours = hasDisplayableBusinessHours(business.hours) ? business.hours : null;
 	const currentHours = businessHours ? hoursStatus[businessHours.status] : null;
 	const shareMessage = `Check out this business on Comynity, ${business.name}, View details, contact, services, timings & more:\n${shareUrl}`;
 
