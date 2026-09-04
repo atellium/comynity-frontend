@@ -15,7 +15,7 @@ export type BusinessCity = string | {
   name: string;
   state?: string;
   state_id?: number;
-};
+} | null;
 
 export type BusinessListItem = {
   id: string;
