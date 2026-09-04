@@ -1,6 +1,19 @@
 import type { Metadata } from "next";
 import { BusinessDetailPage } from "@/features/businesses";
 import { getBusinessNameBySlug } from "@/features/businesses/business.service";
+import { getSiteUrl } from "@/lib/site-url";
+
+const appIconImage = {
+  url: "/app-icons/icon-1024X1024.png",
+  width: 1024,
+  height: 1024,
+  alt: "Comynity app icon",
+  type: "image/png",
+};
+
+function getAbsoluteImageUrl(source: string) {
+  return new URL(source, getSiteUrl()).toString();
+}
 
 export async function generateMetadata({
   params,
@@ -17,8 +30,8 @@ export async function generateMetadata({
     const description = business.description?.trim()
       || `Discover ${business.name} in ${location}. View business details, contact information, products, services, and opening hours on Comynity.`;
     const images = business.media.thumbnail
-      ? [{ url: business.media.thumbnail, alt: business.name }]
-      : [{ url: "/opengraph-image", alt: "Comynity" }];
+      ? [{ url: getAbsoluteImageUrl(business.media.thumbnail), alt: business.name }]
+      : [appIconImage];
 
     return {
       title,

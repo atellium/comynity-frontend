@@ -53,10 +53,11 @@ export const metadata: Metadata = {
 		locale: "en_IN",
 		images: [
 			{
-				url: "/opengraph-image",
-				width: 1200,
-				height: 630,
-				alt: "Comynity local business discovery platform",
+				url: "/app-icons/icon-1024X1024.png",
+				width: 1024,
+				height: 1024,
+				alt: "Comynity app icon",
+				type: "image/png",
 			},
 		],
 	},
@@ -64,7 +65,15 @@ export const metadata: Metadata = {
 		card: "summary_large_image",
 		title,
 		description,
-		images: ["/opengraph-image"],
+		images: [
+			{
+				url: "/app-icons/icon-1024X1024.png",
+				width: 1024,
+				height: 1024,
+				alt: "Comynity app icon",
+				type: "image/png",
+			},
+		],
 	},
 };
 
