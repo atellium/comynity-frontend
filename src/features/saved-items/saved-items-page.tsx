@@ -32,7 +32,7 @@ function SavedGroup({ type, items, first }: { type: string; items: SavedItem[]; 
 
 function SavedBusinessCard({ saved }: { saved: SavedItem }) {
   const business = saved.item as SavedBusiness;
-  const city = typeof business.location.city === "string" ? business.location.city : business.location.city.name;
+  const city = typeof business.location.city === "string" ? business.location.city : business.location.city?.name;
   return <article className="relative rounded-xl border border-border-subtle p-3 dark:border-border-dark-subtle"><SaveButton itemType="business" objectId={saved.object_id} className="absolute right-2 top-2 z-10 flex size-9 items-center justify-center rounded-full bg-white/90 text-brand shadow" /><Link href={`/business/${encodeURIComponent(business.slug)}`} className="flex gap-3"><div className="relative size-20 shrink-0 overflow-hidden rounded-lg bg-surface-tertiary"><Image src={business.media.thumbnail || "/images/default.jpg"} alt="" fill sizes="80px" className="object-cover" /></div><div className="min-w-0 pr-8"><h3 className="truncate font-extrabold">{business.name}</h3><p className="mt-1 truncate text-xs font-semibold text-foreground-muted">{business.categories?.map((category) => category.display_name).join(" · ") || "Uncategorized"}</p><p className="mt-2 flex items-center gap-1 truncate text-xs text-foreground-muted"><MapPin size={12} />{business.location.locality}, {city}</p></div></Link></article>;
 }
 

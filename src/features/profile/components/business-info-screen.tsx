@@ -20,8 +20,8 @@ export function BusinessInfoScreen({ slug }: { slug: string }) {
 }
 
 function BusinessInfoCards({ business, onEdit, onBusinessSaved }: { business: OwnedBusinessInfo; onEdit: (section: BusinessInfoSection | "gallery") => void; onBusinessSaved: (business: OwnedBusinessInfo) => void }) {
-  const city = typeof business.location.city === "string" ? business.location.city : business.location.city.name;
-  const state = typeof business.location.city === "string" ? business.location.state : business.location.city.state;
+  const city = typeof business.location.city === "string" ? business.location.city : business.location.city?.name;
+  const state = typeof business.location.city === "string" ? business.location.state : business.location.city?.state;
   const socials = ["facebook", "instagram", "youtube", "linkedin", "x"].flatMap((network) => {
     const url = business.contact.social_urls?.[network];
     return url ? [[network, url] as const] : [];
