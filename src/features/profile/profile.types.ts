@@ -16,6 +16,7 @@ export type OwnedBusinessesResponse = Omit<BusinessListResponse, "results"> & {
 
 export type OwnedBusinessInfo = Omit<OwnedBusiness, "hours" | "media"> & {
   description: string | null;
+  services: string[] | null;
   media: OwnedBusiness["media"] & { gallery: string[] };
   hours: (NonNullable<OwnedBusiness["hours"]> & {
     schedule: Record<string, Array<{ opens_at: string; closes_at: string }>>;
@@ -71,6 +72,7 @@ export type BusinessUpdatePayload = Partial<{
   latitude: number; longitude: number; phone: string; whatsapp: string; email: string; website: string; description: string;
   established_year: number; alternate_numbers: string[]; social_urls: Record<string, string>; is_active: boolean;
   display_full_address: boolean; display_business_hours: boolean; seo_title: string; seo_description: string; seo_keywords: string;
+  services: string[];
 }>;
 
 export type BusinessHoursUpdatePayload = {
