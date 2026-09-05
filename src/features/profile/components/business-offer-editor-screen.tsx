@@ -51,7 +51,7 @@ export function BusinessOfferEditorScreen({ businessSlug, offerId }: { businessS
     const selected = event.target.files?.[0]; event.target.value = ""; if (!selected) return;
     setPreparingImage(true); setError(null);
     try {
-      const compressed = await compressImage(selected, { maxWidth: 1600, quality: 0.95 });
+      const compressed = await compressImage(selected, { maxWidth: 1024, quality: 0.95 });
       if (imagePreview) URL.revokeObjectURL(imagePreview);
       setImageFile(compressed); setImagePreview(URL.createObjectURL(compressed));
     } catch (compressionError) {
@@ -91,3 +91,4 @@ function FormCard({ title, children }: { title: string; children: React.ReactNod
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="block text-xs font-bold"><span className="mb-1.5 block">{label}</span>{children}</label>; }
 function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (value: boolean) => void }) { return <label className="flex items-center justify-between text-sm font-bold"><span>{label}</span><span className={`relative h-7 w-12 rounded-full ${checked ? "bg-brand" : "bg-slate-200"}`}><input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} className="sr-only" /><span className={`absolute top-1 size-5 rounded-full bg-white transition-all ${checked ? "left-6" : "left-1"}`} /></span></label>; }
 function toDateInput(value: string) { const date = new Date(value); if (Number.isNaN(date.getTime())) return ""; const offset = date.getTimezoneOffset() * 60_000; return new Date(date.getTime() - offset).toISOString().slice(0, 10); }
+

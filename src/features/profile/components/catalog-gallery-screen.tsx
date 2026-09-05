@@ -112,7 +112,7 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
     try {
       if (selectedImages.length > available) setError(`Maximum 5 new images at a time. Only the first ${available} selected image${available === 1 ? " was" : "s were"} added.`);
       const images = selectedImages.slice(0, available);
-      const compressed = await Promise.all(images.map((file) => compressImage(file, { maxWidth: 1024, quality: 0.97 })));
+      const compressed = await Promise.all(images.map((file) => compressImage(file, { maxWidth: 1024, quality: 0.95 })));
       const items = compressed.map((file): NewItem => { const previewUrl = URL.createObjectURL(file); previewUrls.current.add(previewUrl); return { type: "new", file, previewUrl, clientId: createClientId() }; });
       setGallery((current) => [...current, ...items]);
     } catch (compressionError) {
@@ -165,3 +165,4 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
     </main>
   </div>;
 }
+

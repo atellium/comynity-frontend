@@ -135,6 +135,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
       const url = business.contact.social_urls?.[network];
       return url ? [{ label: socialLabel(network), href: externalUrl(url), icon: socialIcon(network), color: socialColor(network) }] : [];
     });
+  const services = (business.services ?? []).map((service) => service.trim()).filter(Boolean);
 
 	useEffect(() => {
 		function updateVisibility() {
@@ -187,6 +188,21 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
               </a>
             ))}
           </div>
+        )}
+        {services.length > 0 && (
+          <section className="mt-4" aria-labelledby="business-services-heading">
+            <h2 id="business-services-heading" className="text-base font-extrabold tracking-tight text-foreground dark:text-foreground-dark">
+              Services
+            </h2>
+            <ul className="mt-1.5 space-y-2 p-3  rounded-xl border border-border-subtle">
+              {services.map((service, index) => (
+                <li key={`${service}-${index}`} className="flex items-start gap-2.5 text-sm text-foreground font-semibold dark:text-foreground-dark-secondary">
+                  <i className="fa-solid fa-circle-check mt-1 shrink-0 text-xs text-brand dark:text-brand-300" aria-hidden="true" />
+                  <span>{service}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
         <BusinessOffersSection
           offers={business.offers}

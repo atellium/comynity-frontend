@@ -96,7 +96,7 @@ export async function uploadCatalogImages(businessSlug: string, catalogSlug: str
       results[index] = await uploadCatalogImage(businessSlug, catalogSlug, files[index]);
     }
   }
-  await Promise.all(Array.from({ length: Math.min(3, files.length) }, () => worker()));
+  await Promise.all(Array.from({ length: Math.min(5, files.length) }, () => worker()));
   return results;
 }
 
@@ -176,7 +176,7 @@ export async function uploadBusinessGalleryImages(slug: string, files: File[]) {
       results[index] = await uploadBusinessGalleryImage(slug, files[index]);
     }
   }
-  await Promise.all(Array.from({ length: Math.min(3, files.length) }, () => worker()));
+  await Promise.all(Array.from({ length: Math.min(5, files.length) }, () => worker()));
   return results;
 }
 

@@ -70,6 +70,11 @@ export function BusinessDashboardScreen({ slug }: { slug: string }) {
         <span className="min-w-0 flex-1"><span className="block text-sm font-extrabold text-foreground">Products</span><span className="mt-0.5 block text-xs text-foreground-muted">View and manage your product catalogue.</span></span>
         <i className="fa-solid fa-chevron-right text-xs text-foreground-muted" aria-hidden="true" />
       </Link>
+      <Link href={`/business/${encodeURIComponent(slug)}/manage/services`} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand" aria-hidden="true"><i className="fa-solid fa-screwdriver-wrench" /></span>
+        <span className="min-w-0 flex-1"><span className="block text-sm font-extrabold text-foreground">Services</span><span className="mt-0.5 block text-xs text-foreground-muted">View and manage your services.</span></span>
+        <i className="fa-solid fa-chevron-right text-xs text-foreground-muted" aria-hidden="true" />
+      </Link>
       <Link href={`/business/${encodeURIComponent(slug)}/manage/offers`} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand" aria-hidden="true"><i className="fa-solid fa-tags" /></span>
         <span className="min-w-0 flex-1"><span className="block text-sm font-extrabold text-foreground">Offers</span><span className="mt-0.5 block text-xs text-foreground-muted">Create and manage your business offers.</span></span>

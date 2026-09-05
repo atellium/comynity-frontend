@@ -190,6 +190,7 @@ export type BusinessNameDetail = {
   id: string;
   name: string;
   description: string | null;
+  services: string[] | null;
   is_verified: boolean;
   categories: BusinessCategory[] | null;
   media: {
