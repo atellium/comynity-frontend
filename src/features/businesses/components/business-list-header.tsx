@@ -8,17 +8,8 @@ import {
 	Clock,
 	X,
 } from "lucide-react";
+import { businessListingPath } from "@/lib/business-listing-url";
 import { useAppSelector } from "@/store/hooks";
-
-function segment(value: string) {
-	return value
-		.trim()
-		.toLocaleLowerCase()
-		.normalize("NFKD")
-		.replace(/[\u0300-\u036f]/g, "")
-		.replace(/[^a-z0-9]+/g, "-")
-		.replace(/^-+|-+$/g, "");
-}
 
 export function BusinessListHeader({
 	categoryLabel,
@@ -67,7 +58,7 @@ export function BusinessListHeader({
 		if (verifiedOnly) filters.set("is_verified", "true");
 		const filterQuery = filters.size ? `?${filters.toString()}` : "";
 		router.replace(
-			`/${segment(city)}/${segment(locality)}/${encodeURIComponent(categorySlug)}${filterQuery}`,
+			`${businessListingPath({ city, locality, categorySlug })}${filterQuery}`,
 		);
 	}, [
 		categorySlug,
