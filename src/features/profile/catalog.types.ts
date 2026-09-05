@@ -42,3 +42,17 @@ export type CatalogGalleryImage = {
 export type CatalogGalleryResponse = {
   results: CatalogGalleryImage[] | null;
 };
+
+export type CatalogImageUploadTicket = {
+  id: string;
+  upload_url: string;
+  content_type: string;
+  expires_in: number;
+};
+
+export type CatalogImageUpload = {
+  id: string;
+  status: "pending" | "processing" | "ready" | "failed";
+  error: string;
+  image: CatalogGalleryImage | null;
+};

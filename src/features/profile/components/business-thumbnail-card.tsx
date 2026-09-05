@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useMutation } from "@tanstack/react-query";
-import { updateOwnedBusiness } from "../profile.service";
+import { uploadBusinessThumbnail } from "../profile.service";
 import type { OwnedBusinessInfo } from "../profile.types";
 import { compressImage } from "@/lib/compress-image";
 
@@ -15,9 +15,7 @@ export function BusinessThumbnailCard({ business, onSaved }: { business: OwnedBu
   const mutation = useMutation({
     mutationFn: () => {
       if (!file) throw new Error("Select a thumbnail image.");
-      const payload = new FormData();
-      payload.append("thumbnail", file);
-      return updateOwnedBusiness(business.slug, payload);
+      return uploadBusinessThumbnail(business.slug, file);
     },
     onMutate: () => setError(null),
     onSuccess: (updated) => {
@@ -35,7 +33,7 @@ export function BusinessThumbnailCard({ business, onSaved }: { business: OwnedBu
     event.target.value = "";
     if (!selected) return;
     try {
-      const compressed = await compressImage(selected, { maxWidth: 1024, quality: 0.95 });
+      const compressed = await compressImage(selected, { maxWidth: 1600, quality: 0.95 });
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setFile(compressed);
       setPreviewUrl(URL.createObjectURL(compressed));
