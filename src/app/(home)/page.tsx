@@ -119,7 +119,7 @@ export default function Home() {
 			</h1>
 			<MobileHomeHeader />
 			<HomeSearchLink />
-			<HomeBannerSlider />
+			{/* <HomeBannerSlider /> */}
 			<PopularCategoriesGrid />
 			<NearbyOffers />
 			<ListBusinessCta />
