@@ -29,6 +29,7 @@ export function BusinessOfferEditorScreen({ businessSlug, offerId }: { businessS
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [preparingImage, setPreparingImage] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     if (!offer || initialized) return;
@@ -45,7 +46,8 @@ export function BusinessOfferEditorScreen({ businessSlug, offerId }: { businessS
     createdOfferIdRef.current = savedOffer.id;
     if (imageFile) await uploadBusinessOfferImage(businessSlug, savedOffer.id, imageFile);
     return savedOffer;
-  }, onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["business-offers", businessSlug] }); router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/offers`); }, onError: () => setError("Unable to save the offer. Please check the form and try again.") });
+  }, onSuccess: async () => { setIsRedirecting(true); await queryClient.invalidateQueries({ queryKey: ["business-offers", businessSlug] }); router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/offers`); }, onError: () => { setIsRedirecting(false); setError("Unable to save the offer. Please check the form and try again."); } });
+  const isBusy = save.isPending || preparingImage || isRedirecting;
 
   async function selectImage(event: ChangeEvent<HTMLInputElement>) {
     const selected = event.target.files?.[0]; event.target.value = ""; if (!selected) return;
@@ -66,6 +68,7 @@ export function BusinessOfferEditorScreen({ businessSlug, offerId }: { businessS
 
   function submit(event: FormEvent) {
     event.preventDefault(); setError(null);
+    if (isBusy) return;
     if (!title.trim() || !startsAt || !expiresAt) return setError("Title, start date and expiry date are required.");
     if (expiresAt < startsAt) return setError("End date cannot be before the start date.");
     const payload = new FormData();
@@ -83,7 +86,7 @@ export function BusinessOfferEditorScreen({ businessSlug, offerId }: { businessS
     <FormCard title="Offer information"><div><div className="mb-2 flex items-center justify-between gap-3"><span className="text-xs font-bold">Image</span>{imageSource && <button type="button" onClick={() => imageInputRef.current?.click()} disabled={preparingImage} className="rounded-lg bg-brand-50 px-3 py-1.5 text-[11px] font-extrabold text-brand disabled:opacity-50"><i className="fa-solid fa-pen mr-1" aria-hidden="true" />Edit</button>}</div>{imageSource ? <div className="relative aspect-video overflow-hidden rounded-xl bg-slate-100"><img src={imageSource} alt="Offer preview" className="size-full object-cover" />{imagePreview && <span className="absolute left-2 top-2 rounded-full bg-brand px-2 py-1 text-[10px] font-extrabold text-white">New</span>}</div> : <button type="button" onClick={() => imageInputRef.current?.click()} disabled={preparingImage} className="flex aspect-video w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-brand-200 text-brand disabled:opacity-50"><i className={`fa-solid ${preparingImage ? "fa-circle-notch fa-spin" : "fa-image"} text-2xl`} aria-hidden="true" /><span className="mt-2 text-xs font-extrabold">Select offer image</span></button>}<input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={(event) => void selectImage(event)} className="sr-only" />{imageFile && <button type="button" onClick={clearSelectedImage} className="mt-2 text-xs font-bold text-foreground-muted underline">Cancel new image</button>}</div><Field label="Title"><input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Enter offer title" required className={inputClass} /></Field><Field label="Description"><textarea value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Describe the offer" rows={4} className="w-full rounded-xl border border-slate-200 p-3 text-sm font-normal outline-none focus:border-brand" /></Field></FormCard>
     <FormCard title="Schedule"><Field label="Start date"><input type="date" value={startsAt} onChange={(event) => setStartsAt(event.target.value)} required className={inputClass} /></Field><Field label="End date"><input type="date" value={expiresAt} min={startsAt || undefined} onChange={(event) => setExpiresAt(event.target.value)} required className={inputClass} /></Field><Toggle label="Active" checked={active} onChange={setActive} /></FormCard>
     <FormCard title="Terms">{terms.map((term, index) => <div key={index} className="flex gap-2"><input value={term} onChange={(event) => setTerms(terms.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} placeholder={`Enter term ${index + 1}`} className={inputClass} />{terms.length > 1 && <button type="button" aria-label={`Remove term ${index + 1}`} onClick={() => setTerms(terms.filter((_, itemIndex) => itemIndex !== index))} className="size-11 shrink-0 rounded-xl bg-red-50 text-danger"><i className="fa-solid fa-xmark" /></button>}</div>)}<button type="button" onClick={() => setTerms([...terms, ""])} disabled={!terms.at(-1)?.trim()} className="text-xs font-extrabold text-brand disabled:opacity-40"><i className="fa-solid fa-plus mr-1" />Add term</button></FormCard>
-    {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-danger">{error}</p>}<button type="submit" disabled={save.isPending || preparingImage} className="h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-60">{save.isPending ? "Saving…" : editing ? "Update offer" : "Add offer"}</button>
+    {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-danger">{error}</p>}<button type="submit" disabled={isBusy} className="h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-60">{isBusy ? "Saving..." : editing ? "Update offer" : "Add offer"}</button>
   </form></div>;
 }
 

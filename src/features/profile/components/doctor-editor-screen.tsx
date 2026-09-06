@@ -4,8 +4,9 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import MobileHeader from "@/components/layout/MobileHeader";
-import { createCatalog, getOwnedBusinessInfo, searchCatalogCategories } from "../profile.service";
-import type { CatalogCategory, CatalogPayload } from "../catalog.types";
+import { getProductBySlug } from "@/features/businesses/business.service";
+import { createCatalog, getOwnedBusinessInfo, searchCatalogCategories, updateCatalog } from "../profile.service";
+import type { CatalogCategory, CatalogPayload, DoctorSpecifications, EditableProduct } from "../catalog.types";
 
 const inputClass = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-foreground outline-none focus:border-brand";
 type ScheduleDraft = { id: string; title: string; slots: Array<{ id: string; start: string; end: string }> };
@@ -15,10 +16,13 @@ function createDraftId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-export function DoctorEditorScreen({ businessSlug }: { businessSlug: string }) {
+export function DoctorEditorScreen({ businessSlug, catalogSlug }: { businessSlug: string; catalogSlug?: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
+  const editing = Boolean(catalogSlug);
   const business = useQuery({ queryKey: ["businesses", "mine", businessSlug], queryFn: () => getOwnedBusinessInfo(businessSlug) });
+  const detail = useQuery({ queryKey: ["doctor", catalogSlug], queryFn: () => getProductBySlug(catalogSlug!), enabled: editing });
+  const [initialized, setInitialized] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [specialties, setSpecialties] = useState<CatalogCategory[]>([]);
@@ -33,17 +37,49 @@ export function DoctorEditorScreen({ businessSlug }: { businessSlug: string }) {
   ]);
   const [isActive, setIsActive] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  useEffect(() => {
+    if (!detail.data || initialized) return;
+    const doctor = detail.data as EditableProduct;
+    const specs = doctor.specifications as Partial<DoctorSpecifications> | undefined;
+    queueMicrotask(() => {
+      setName(doctor.name);
+      setDescription(doctor.description ?? "");
+      setSpecialties((doctor.categories ?? []) as CatalogCategory[]);
+      setQualification(specs?.qualification ?? "");
+      setExperienceYears(specs?.experience_years === undefined ? "" : String(specs.experience_years));
+      setGender(specs?.gender ?? "");
+      setConsultationFee(specs?.consultation_fee === undefined ? "" : String(specs.consultation_fee));
+      setTreatments((specs?.treatments ?? []).join(", "));
+      setLanguages((specs?.languages ?? []).join(", "));
+      setSchedules((specs?.schedule?.length ? specs.schedule : [{ title: "Monday - Friday", slots: ["10:00 AM - 1:00 PM", "5:00 PM - 8:00 PM"] }]).map((schedule) => ({
+        id: createDraftId(),
+        title: schedule.title,
+        slots: schedule.slots.map((slot) => {
+          const [start = "", end = ""] = slot.split(" - ");
+          return { id: createDraftId(), start: toTimeInput(start), end: toTimeInput(end) };
+        }),
+      })));
+      setIsActive(doctor.is_active !== false);
+      setInitialized(true);
+    });
+  }, [detail.data, initialized]);
 
   const save = useMutation({
-    mutationFn: (payload: CatalogPayload) => createCatalog(businessSlug, payload),
+    mutationFn: (payload: CatalogPayload) => editing ? updateCatalog(businessSlug, catalogSlug!, payload) : createCatalog(businessSlug, payload),
     onSuccess: async () => {
+      setIsRedirecting(true);
       await queryClient.invalidateQueries({ queryKey: ["business", businessSlug, "doctors"] });
       router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/doctors`);
     },
+    onError: () => setIsRedirecting(false),
   });
+  const isBusy = save.isPending || isRedirecting;
 
   function submit(event: FormEvent) {
     event.preventDefault();
+    if (isBusy) return;
     if (!name.trim()) return setError("Doctor name is required.");
     if (!qualification.trim()) return setError("Qualification is required.");
     const years = Number(experienceYears);
@@ -74,18 +110,20 @@ export function DoctorEditorScreen({ businessSlug }: { businessSlug: string }) {
       is_featured: false,
       is_active: isActive,
     };
-    console.log("Doctor catalog payload", payload);
-    save.mutate(payload, { onError: () => setError("Unable to add doctor.") });
+    save.mutate(payload, { onError: () => setError(`Unable to ${editing ? "update" : "add"} doctor.`) });
   }
 
-  return <div className="min-h-dvh bg-slate-50 pb-10"><MobileHeader title="Add Doctor" subtitle={business.data?.name ?? "Loading business..."} /><form onSubmit={submit} className="mx-auto w-full max-w-3xl space-y-4 px-page pt-5">
+  if (editing && detail.isPending) return <div className="min-h-dvh bg-slate-50"><MobileHeader title="Edit Doctor" subtitle={business.data?.name ?? "Loading business..."} /><p className="py-12 text-center text-sm text-foreground-muted">Loading doctor...</p></div>;
+  if (editing && detail.isError) return <div className="min-h-dvh bg-slate-50"><MobileHeader title="Edit Doctor" subtitle={business.data?.name} /><p className="py-12 text-center text-sm font-semibold text-danger">Doctor not found.</p></div>;
+
+  return <div className="min-h-dvh bg-slate-50 pb-10"><MobileHeader title={editing ? "Edit Doctor" : "Add Doctor"} subtitle={business.data?.name ?? "Loading business..."} /><form onSubmit={submit} className="mx-auto w-full max-w-3xl space-y-4 px-page pt-5">
     <FormCard title="Doctor details"><Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter doctor name" className={inputClass} /></Field><Field label="Description"><textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Short profile summary" rows={4} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-brand" /></Field></FormCard>
     <SpecialtyPicker selected={specialties} onChange={setSpecialties} />
     <FormCard title="Specifications"><Field label="Qualification"><input value={qualification} onChange={(e) => setQualification(e.target.value)} placeholder="MBBS, MD (Medicine)" className={inputClass} /></Field><Field label="Experience years"><input type="number" min="0" value={experienceYears} onChange={(e) => setExperienceYears(e.target.value)} placeholder="12" className={inputClass} /></Field><Field label="Gender"><select value={gender} onChange={(e) => setGender(e.target.value)} className={inputClass}><option value="">Select gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Other">Other</option></select></Field><Field label="Consultation fee"><input type="number" min="0" step="0.01" value={consultationFee} onChange={(e) => setConsultationFee(e.target.value)} placeholder="700" className={inputClass} /></Field><Field label="Treatments"><textarea value={treatments} onChange={(e) => setTreatments(e.target.value)} placeholder="High Blood Pressure, Chest Pain, Diabetes" rows={3} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-brand" /></Field><Field label="Languages"><input value={languages} onChange={(e) => setLanguages(e.target.value)} placeholder="Bengali, Hindi, English" className={inputClass} /></Field></FormCard>
     <ScheduleEditor schedules={schedules} onChange={setSchedules} />
     <FormCard title="Settings"><Toggle label="Active" checked={isActive} onChange={setIsActive} /></FormCard>
     {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm font-semibold text-danger">{error}</p>}
-    <button type="submit" disabled={save.isPending} className="h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-60">{save.isPending ? "Saving..." : "Add doctor"}</button>
+    <button type="submit" disabled={isBusy} className="h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-60">{isBusy ? "Saving..." : editing ? "Save changes" : "Add doctor"}</button>
   </form></div>;
 }
 
@@ -133,6 +171,16 @@ function formatTime(value: string) {
   const period = hour >= 12 ? "PM" : "AM";
   const displayHour = hour % 12 || 12;
   return `${displayHour}:${minute} ${period}`;
+}
+function toTimeInput(value: string) {
+  const match = value.trim().match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+  if (!match) return "";
+  let hour = Number(match[1]);
+  const minute = match[2];
+  const period = match[3].toUpperCase();
+  if (period === "PM" && hour < 12) hour += 12;
+  if (period === "AM" && hour === 12) hour = 0;
+  return `${String(hour).padStart(2, "0")}:${minute}`;
 }
 function FormCard({ title, children }: { title: string; children: React.ReactNode }) { return <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]"><h2 className="mb-4 text-sm font-extrabold text-foreground">{title}</h2><div className="space-y-4">{children}</div></section>; }
 function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="block text-xs font-bold text-foreground"><span className="mb-1.5 block">{label}</span>{children}</label>; }

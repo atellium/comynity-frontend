@@ -35,6 +35,7 @@ export function CatalogEditorScreen({ businessSlug, catalogSlug }: { businessSlu
   const [isActive, setIsActive] = useState(true);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     if (!detail.data || initialized) return;
@@ -55,12 +56,15 @@ export function CatalogEditorScreen({ businessSlug, catalogSlug }: { businessSlu
 
   const save = useMutation({
     mutationFn: (payload: CatalogPayload) => editing ? updateCatalog(businessSlug, catalogSlug!, payload) : createCatalog(businessSlug, payload),
-    onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["businesses", businessSlug, "manage-products"] }); router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/products`); },
+    onSuccess: async () => { setIsRedirecting(true); await queryClient.invalidateQueries({ queryKey: ["businesses", businessSlug, "manage-products"] }); router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/products`); },
+    onError: () => setIsRedirecting(false),
   });
-  const remove = useMutation({ mutationFn: () => deleteCatalog(businessSlug, catalogSlug!), onSuccess: async () => { await queryClient.invalidateQueries({ queryKey: ["businesses", businessSlug, "manage-products"] }); router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/products`); } });
+  const remove = useMutation({ mutationFn: () => deleteCatalog(businessSlug, catalogSlug!), onSuccess: async () => { setIsRedirecting(true); await queryClient.invalidateQueries({ queryKey: ["businesses", businessSlug, "manage-products"] }); router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/products`); }, onError: () => setIsRedirecting(false) });
+  const isBusy = save.isPending || remove.isPending || isRedirecting;
 
   function submit(event: FormEvent) {
     event.preventDefault();
+    if (isBusy) return;
     if (!name.trim()) return setError("Product name is required.");
     if (priceType !== "ask" && !price) return setError("Price is required for this price type.");
     if (priceType === "range" && !maxPrice) return setError("Maximum price is required for a range.");
@@ -85,9 +89,9 @@ export function CatalogEditorScreen({ businessSlug, catalogSlug }: { businessSlu
     <DynamicRows title="Custom fields" addLabel="Add field" rows={customFields} setRows={setCustomFields} first="Title" second="Value" />
     <FormCard title="Settings"><Toggle label="Available" checked={isAvailable} onChange={setIsAvailable} /><Toggle label="Featured" checked={isFeatured} onChange={setIsFeatured} /><Toggle label="Bestseller" checked={isBestseller} onChange={setIsBestseller} /><Toggle label="Active" checked={isActive} onChange={setIsActive} /></FormCard>
     {error && <p role="alert" className="text-sm font-semibold text-danger">{error}</p>}
-    <button type="submit" disabled={save.isPending || remove.isPending} className="h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-60">{save.isPending ? "Saving…" : editing ? "Save changes" : "Add product"}</button>
-    {editing && <button type="button" disabled={remove.isPending} onClick={() => setDeleteOpen(true)} className="h-12 w-full rounded-xl border border-red-200 bg-white text-sm font-extrabold text-danger disabled:opacity-60">Delete product</button>}
-  </form><BottomSheetModal open={deleteOpen} onClose={() => !remove.isPending && setDeleteOpen(false)} title="Delete product"><div className="px-page pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-6"><h2 className="text-lg font-extrabold">Delete product?</h2><p className="mt-2 text-sm text-foreground-muted">This product will be permanently deleted. This action cannot be undone.</p><div className="mt-6 grid grid-cols-2 gap-3"><button type="button" onClick={() => setDeleteOpen(false)} className="h-11 rounded-xl border border-slate-200 text-sm font-extrabold">Cancel</button><button type="button" disabled={remove.isPending} onClick={() => remove.mutate()} className="h-11 rounded-xl bg-danger text-sm font-extrabold text-white disabled:opacity-60">{remove.isPending ? "Deleting…" : "Delete"}</button></div></div></BottomSheetModal></div>;
+    <button type="submit" disabled={isBusy} className="h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-60">{isBusy ? "Saving..." : editing ? "Save changes" : "Add product"}</button>
+    {editing && <button type="button" disabled={isBusy} onClick={() => setDeleteOpen(true)} className="h-12 w-full rounded-xl border border-red-200 bg-white text-sm font-extrabold text-danger disabled:opacity-60">Delete product</button>}
+  </form><BottomSheetModal open={deleteOpen} onClose={() => !isBusy && setDeleteOpen(false)} title="Delete product"><div className="px-page pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-6"><h2 className="text-lg font-extrabold">Delete product?</h2><p className="mt-2 text-sm text-foreground-muted">This product will be permanently deleted. This action cannot be undone.</p><div className="mt-6 grid grid-cols-2 gap-3"><button type="button" disabled={isBusy} onClick={() => setDeleteOpen(false)} className="h-11 rounded-xl border border-slate-200 text-sm font-extrabold disabled:opacity-60">Cancel</button><button type="button" disabled={isBusy} onClick={() => remove.mutate()} className="h-11 rounded-xl bg-danger text-sm font-extrabold text-white disabled:opacity-60">{isBusy ? "Deleting..." : "Delete"}</button></div></div></BottomSheetModal></div>;
 }
 
 function CategoryPicker({ selected, onChange }: { selected: CatalogCategory[]; onChange: (items: CatalogCategory[]) => void }) {
