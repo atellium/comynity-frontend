@@ -21,7 +21,7 @@ export function PopularCategoriesGrid() {
 			aria-labelledby="popular-categories-title"
 		>
 			<CategoriesGridTitle />
-			<div className="hide-scrollbar grid grid-flow-col grid-rows-2 auto-cols-[calc(26.3158%_-_0.3947rem)] gap-2 overflow-x-auto bg-surface pb-2 pl-page pr-page dark:border-border-dark-subtle dark:bg-surface-dark">
+			<div className="grid grid-cols-4 gap-2 bg-surface pb-2 pl-page pr-page dark:border-border-dark-subtle dark:bg-surface-dark">
 				{categories.slice(0, MAX_VISIBLE_CATEGORIES).map((category) => (
 					<button
 						key={category.id}
@@ -34,7 +34,7 @@ export function PopularCategoriesGrid() {
 						}
 					className="group flex min-w-0 flex-col items-center gap-1.5 rounded-xl py-2 text-center transition-colors hover:bg-surface-secondary active:bg-brand-50 dark:hover:bg-surface-dark-secondary dark:active:bg-brand-950 "
 					>
-						<span className="relative h-24 w-full overflow-hidden rounded-xl bg-gray-100 transition-transform group-hover:scale-105 dark:bg-slate-800">
+						<span className="relative h-[4.5rem] w-full overflow-hidden rounded-xl bg-gray-100 transition-transform group-hover:scale-105 dark:bg-slate-800">
 							<Image
 								src={category.image || "/images/default_category.png"}
 								alt=""
@@ -71,10 +71,10 @@ function CategoriesGridSkeleton() {
 			aria-label="Loading featured categories"
 		>
 			<CategoriesGridTitle />
-			<div className="hide-scrollbar grid grid-flow-col grid-rows-2 auto-cols-[calc(26.3158%_-_0.3947rem)] gap-2 overflow-x-auto border-y border-border-subtle bg-surface py-3 pl-page pr-page shadow-sm dark:border-border-dark-subtle dark:bg-surface-dark">
+			<div className="grid grid-cols-4 gap-2 border-y border-border-subtle bg-surface py-3 pl-page pr-page shadow-sm dark:border-border-dark-subtle dark:bg-surface-dark">
 				{Array.from({ length: 12 }, (_, index) => (
 					<div key={index} className="flex flex-col items-center gap-2 p-2 ">
-						<span className="h-16 w-full max-w-20 animate-pulse bg-background-muted dark:bg-background-dark-muted" />
+						<span className="h-[4.5rem] w-full animate-pulse rounded-xl bg-background-muted dark:bg-background-dark-muted" />
 						<span className="h-3 w-4/5 animate-pulse rounded bg-background-muted dark:bg-background-dark-muted" />
 					</div>
 				))}
