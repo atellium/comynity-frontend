@@ -190,6 +190,10 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
             ))}
           </div>
         )}
+        <BusinessOffersSection
+          offers={business.offers}
+          businessThumbnail={business.media.thumbnail}
+        />
         {services.length > 0 && (
           <section className="mt-4" aria-labelledby="business-services-heading">
             <h2 id="business-services-heading" className="text-base font-extrabold tracking-tight text-foreground dark:text-foreground-dark">
@@ -206,10 +210,6 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
           </section>
         )}
         <BusinessDoctorsSection businessSlug={slug} phone={business.contact.phone} />
-        <BusinessOffersSection
-          offers={business.offers}
-          businessThumbnail={business.media.thumbnail}
-        />
         <BusinessProductsSection product={business.product} businessSlug={slug} />
         <BusinessGallery business={business} />
         {contactOptions.length > 0 && (

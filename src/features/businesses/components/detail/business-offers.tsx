@@ -16,14 +16,8 @@ export function BusinessOffersSection({
   if (!offers?.length) return null;
 
   return (
-    <section className="mt-6" aria-labelledby="business-offers-heading">
-      <h2
-        id="business-offers-heading"
-        className="text-base font-extrabold tracking-tight text-foreground dark:text-foreground-dark"
-      >
-        Offers
-      </h2>
-      <div className="hide-scrollbar -mx-page mt-2.5 flex gap-3 overflow-x-auto px-page pb-2">
+    <section className="mt-4" aria-label="Business offers">
+      <div className="hide-scrollbar -mx-page flex gap-3 overflow-x-auto px-page pb-2">
         {offers.map((offer) => {
           const image = offer.image || businessThumbnail;
 
