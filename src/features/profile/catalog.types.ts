@@ -2,16 +2,29 @@ import type { BusinessProductCategory, ProductCustomField, ProductDetail, Produc
 
 export type CatalogPriceType = "fixed" | "starts_from" | "ask" | "range";
 
+export type DoctorSpecifications = {
+  qualification: string;
+  experience_years: number;
+  gender: string;
+  consultation_fee: number;
+  treatments: string[];
+  languages: string[];
+  schedule: Array<{
+    title: string;
+    slots: string[];
+  }>;
+};
+
 export type CatalogPayload = {
   name: string;
-  type: "product";
+  type: "product" | "doctor";
   description: string;
   price_type: CatalogPriceType;
   price?: string;
   max_price?: string;
   original_price?: string;
   variants: ProductVariant[];
-  specifications: { is_bargain: boolean; is_available: boolean; is_bestseller: boolean };
+  specifications: { is_bargain: boolean; is_available: boolean; is_bestseller: boolean } | DoctorSpecifications;
   custom_fields: ProductCustomField[];
   categories: number[];
   is_featured: boolean;

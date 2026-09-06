@@ -120,3 +120,16 @@ export async function getBusinessProducts(
     results: data.results ?? [],
   };
 }
+
+export async function getBusinessDoctors(businessSlug: string, page = 1) {
+  const { data } = await publicApiClient.get<BusinessProductsListResponse>(
+    `/api/businesses/${encodeURIComponent(businessSlug)}/catalogs/`,
+    { params: { type: "doctor", page } },
+  );
+
+  return {
+    ...data,
+    categories: data.categories ?? [],
+    results: data.results ?? [],
+  };
+}

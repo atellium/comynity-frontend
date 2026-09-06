@@ -27,8 +27,8 @@ export async function getOwnedBusinesses() {
   };
 }
 
-export async function searchCatalogCategories(search: string) {
-  const { data } = await protectedApiClient.get<CatalogCategorySearchResponse>("/api/catalogs/categories/", { params: { search } });
+export async function searchCatalogCategories(search: string, type?: "specialty") {
+  const { data } = await protectedApiClient.get<CatalogCategorySearchResponse>("/api/catalogs/categories/", { params: { search, type } });
   return (data.results ?? []).map((category) => ({
     ...category,
     display_name: category.name,
@@ -88,6 +88,7 @@ export async function uploadCatalogImage(businessSlug: string, catalogSlug: stri
 }
 
 export async function uploadCatalogImages(businessSlug: string, catalogSlug: string, files: File[]) {
+  if (files.length > 20) throw new Error("You can upload a maximum of 20 product images.");
   const results: CatalogGalleryImage[] = new Array(files.length);
   let nextIndex = 0;
   async function worker() {
