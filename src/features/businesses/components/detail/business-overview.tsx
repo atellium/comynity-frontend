@@ -12,6 +12,7 @@ import { getBusinessCityName, hasDisplayableBusinessHours } from "../../business
 import { BusinessProductsSection } from "./business-products";
 import { BusinessOffersSection } from "./business-offers";
 import { BusinessGallery } from "./business-gallery";
+import { BusinessDoctorsSection } from "./business-doctors";
 
 const dayNames = [
 	"monday",
@@ -204,6 +205,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
             </ul>
           </section>
         )}
+        <BusinessDoctorsSection businessSlug={slug} phone={business.contact.phone} />
         <BusinessOffersSection
           offers={business.offers}
           businessThumbnail={business.media.thumbnail}

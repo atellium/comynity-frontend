@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { AuthGuard } from "@/features/auth";
 import { BusinessManageProductsScreen } from "@/features/profile";
+import { getBusinessManageMetadata } from "../_metadata";
 
-export const metadata: Metadata = { title: "Products", robots: { index: false, follow: false } };
+export async function generateMetadata({ params }: PageProps<"/business/[slug]/manage/products">): Promise<Metadata> {
+  const { slug } = await params;
+  return getBusinessManageMetadata(decodeURIComponent(slug), "Products");
+}
 
 export default async function BusinessManageProductsPage({ params }: PageProps<"/business/[slug]/manage/products">) {
   const { slug } = await params;

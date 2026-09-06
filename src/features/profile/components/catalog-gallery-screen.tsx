@@ -11,6 +11,8 @@ import { compressImage } from "@/lib/compress-image";
 type ExistingItem = { type: "existing"; id: string; image: string };
 type NewItem = { type: "new"; file: File; previewUrl: string; clientId: string };
 type GalleryItem = ExistingItem | NewItem;
+const MAX_PRODUCT_IMAGES = 20;
+const MAX_NEW_IMAGES_PER_BATCH = 5;
 
 function createClientId() {
   if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
@@ -100,8 +102,14 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
   async function addFiles(files: FileList | File[]) {
     if (preparingFiles.current || save.isPending) return;
     const selectedImages = Array.from(files).filter((file) => file.type.startsWith("image/"));
-    const available = Math.max(0, 5 - gallery.filter((item) => item.type === "new").length);
-    if (available === 0) {
+    const totalAvailable = Math.max(0, MAX_PRODUCT_IMAGES - gallery.length);
+    const batchAvailable = Math.max(0, MAX_NEW_IMAGES_PER_BATCH - gallery.filter((item) => item.type === "new").length);
+    const available = Math.min(totalAvailable, batchAvailable);
+    if (totalAvailable === 0) {
+      setError(`You can upload a maximum of ${MAX_PRODUCT_IMAGES} product images. Remove an image before adding more.`);
+      return;
+    }
+    if (batchAvailable === 0) {
       setError("You can select up to 5 new images at a time. Save or remove selected images before adding more.");
       return;
     }
@@ -110,7 +118,7 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
     setSuccess(null);
     setError(null);
     try {
-      if (selectedImages.length > available) setError(`Maximum 5 new images at a time. Only the first ${available} selected image${available === 1 ? " was" : "s were"} added.`);
+      if (selectedImages.length > available) setError(totalAvailable < batchAvailable ? `Maximum ${MAX_PRODUCT_IMAGES} product images. Only the first ${available} selected image${available === 1 ? " was" : "s were"} added.` : `Maximum 5 new images at a time. Only the first ${available} selected image${available === 1 ? " was" : "s were"} added.`);
       const images = selectedImages.slice(0, available);
       const compressed = await Promise.all(images.map((file) => compressImage(file, { maxWidth: 1024, quality: 0.95 })));
       const items = compressed.map((file): NewItem => { const previewUrl = URL.createObjectURL(file); previewUrls.current.add(previewUrl); return { type: "new", file, previewUrl, clientId: createClientId() }; });
@@ -157,7 +165,7 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
           <button type="button" onClick={() => removeItem(index)} aria-label={`Remove image ${index + 1}`} className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-white/90 text-danger shadow"><i className="fa-solid fa-trash" /></button>
           <div className="absolute inset-x-2 bottom-2 flex justify-between"><button type="button" disabled={index === 0} onClick={() => moveItem(index, -1)} aria-label={`Move image ${index + 1} left`} className="flex size-8 items-center justify-center rounded-full bg-white/90 text-foreground shadow disabled:invisible"><i className="fa-solid fa-arrow-left" /></button><button type="button" disabled={index === gallery.length - 1} onClick={() => moveItem(index, 1)} aria-label={`Move image ${index + 1} right`} className="flex size-8 items-center justify-center rounded-full bg-white/90 text-foreground shadow disabled:invisible"><i className="fa-solid fa-arrow-right" /></button></div>
         </article>;
-      })}{gallery.filter((item) => item.type === "new").length < 5 && <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-brand-200 bg-white p-4 text-center text-brand transition hover:bg-brand-50"><i className="fa-solid fa-plus text-2xl" aria-hidden="true" /><span className="mt-2 text-xs font-extrabold">Select images</span><span className="mt-1 text-[10px] text-foreground-muted">Maximum 5 images at a time. If you select more, only the first 5 are added.</span><input type="file" accept="image/*" multiple disabled={isPreparing || save.isPending} onChange={(event: ChangeEvent<HTMLInputElement>) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} className="sr-only" /></label>}</div>}
+      })}{gallery.length < MAX_PRODUCT_IMAGES && gallery.filter((item) => item.type === "new").length < MAX_NEW_IMAGES_PER_BATCH && <label className="flex aspect-square cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-brand-200 bg-white p-4 text-center text-brand transition hover:bg-brand-50"><i className="fa-solid fa-plus text-2xl" aria-hidden="true" /><span className="mt-2 text-xs font-extrabold">Select images</span><span className="mt-1 text-[10px] text-foreground-muted">Maximum {MAX_PRODUCT_IMAGES} images total, {MAX_NEW_IMAGES_PER_BATCH} at a time.</span><input type="file" accept="image/*" multiple disabled={isPreparing || save.isPending} onChange={(event: ChangeEvent<HTMLInputElement>) => { if (event.target.files) addFiles(event.target.files); event.target.value = ""; }} className="sr-only" /></label>}</div>}
 
       {success && <p role="status" className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700"><i className="fa-solid fa-circle-check mr-2" aria-hidden="true" />{success}</p>}
       {error && <p role="alert" className="mt-4 text-sm font-semibold text-danger">{error}</p>}

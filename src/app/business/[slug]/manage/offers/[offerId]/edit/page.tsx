@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { AuthGuard } from "@/features/auth";
 import { BusinessOfferEditorScreen } from "@/features/profile";
+import { getBusinessManageMetadata } from "../../../_metadata";
 
-export const metadata: Metadata = { title: "Edit Offer", robots: { index: false, follow: false } };
+export async function generateMetadata({ params }: PageProps<"/business/[slug]/manage/offers/[offerId]/edit">): Promise<Metadata> {
+  const { slug } = await params;
+  return getBusinessManageMetadata(decodeURIComponent(slug), "Edit Offer");
+}
 
 export default async function EditOfferPage({ params }: PageProps<"/business/[slug]/manage/offers/[offerId]/edit">) {
   const { slug, offerId } = await params;

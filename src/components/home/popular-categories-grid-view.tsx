@@ -17,7 +17,7 @@ export function PopularCategoriesGrid() {
 
 	return (
 		<section
-			className="mx-auto w-full max-w-5xl pb-4"
+			className="mx-auto w-full max-w-5xl pb-4 pt-4"
 			aria-labelledby="popular-categories-title"
 		>
 			<CategoriesGridTitle />
