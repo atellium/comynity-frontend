@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import MobileHeader from "@/components/layout/MobileHeader";
 import { getProductBySlug } from "@/features/businesses/business.service";
-import { createCatalog, getOwnedBusinessInfo, searchCatalogCategories, updateCatalog } from "../profile.service";
+import { createCatalog, getOwnedBusinessInfo, searchCatalogCategories, updateCatalogViaEditEndpoint } from "../profile.service";
 import type { CatalogCategory, CatalogPayload, DoctorSpecifications, EditableProduct } from "../catalog.types";
 
 const inputClass = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-foreground outline-none focus:border-brand";
@@ -67,7 +67,7 @@ export function DoctorEditorScreen({ businessSlug, catalogSlug }: { businessSlug
   }, [detail.data, initialized]);
 
   const save = useMutation({
-    mutationFn: (payload: CatalogPayload) => editing ? updateCatalog(businessSlug, catalogSlug!, payload) : createCatalog(businessSlug, payload),
+    mutationFn: (payload: CatalogPayload) => editing ? updateCatalogViaEditEndpoint(businessSlug, catalogSlug!, payload) : createCatalog(businessSlug, payload),
     onSuccess: async () => {
       setIsRedirecting(true);
       await queryClient.invalidateQueries({ queryKey: ["business", businessSlug, "doctors"] });

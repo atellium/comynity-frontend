@@ -45,6 +45,11 @@ export async function updateCatalog(businessSlug: string, catalogSlug: string, p
   return data;
 }
 
+export async function updateCatalogViaEditEndpoint(businessSlug: string, catalogSlug: string, payload: CatalogPayload) {
+  const { data } = await protectedApiClient.patch(`/api/businesses/mine/${encodeURIComponent(businessSlug)}/catalogs/${encodeURIComponent(catalogSlug)}/edit/`, payload);
+  return data;
+}
+
 export async function deleteCatalog(businessSlug: string, catalogSlug: string) {
   await protectedApiClient.delete(`/api/businesses/mine/${encodeURIComponent(businessSlug)}/catalogs/${encodeURIComponent(catalogSlug)}/`);
 }
