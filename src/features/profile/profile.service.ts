@@ -1,6 +1,6 @@
 import { protectedApiClient } from "@/lib/api";
 import type { BusinessCategoryOption, BusinessCityOption, BusinessGalleryImage, BusinessGalleryResponse, BusinessGalleryUpload, BusinessGalleryUploadTicket, BusinessHoursUpdatePayload, BusinessUpdatePayload, OwnedBusinessInfoResponse, OwnedBusinessesResponse } from "./profile.types";
-import type { CatalogCategorySearchResponse, CatalogGalleryImage, CatalogGalleryResponse, CatalogImageUpload, CatalogImageUploadTicket, CatalogPayload } from "./catalog.types";
+import type { CatalogCategorySearchResponse, CatalogDetailResponse, CatalogGalleryImage, CatalogGalleryResponse, CatalogImageUpload, CatalogImageUploadTicket, CatalogPayload } from "./catalog.types";
 import type { BusinessOfferResponse, BusinessOffersResponse } from "./offer.types";
 
 function normalizeOwnedBusinessInfo(business: NonNullable<OwnedBusinessInfoResponse["result"]>) {
@@ -38,6 +38,18 @@ export async function searchCatalogCategories(search: string, type?: "specialty"
 export async function createCatalog(businessSlug: string, payload: CatalogPayload) {
   const { data } = await protectedApiClient.post(`/api/businesses/mine/${encodeURIComponent(businessSlug)}/catalogs/`, payload);
   return data;
+}
+
+export async function getCatalogDetails(businessSlug: string, catalogSlug: string) {
+  const { data } = await protectedApiClient.get<CatalogDetailResponse>(`/api/businesses/mine/${encodeURIComponent(businessSlug)}/catalogs/${encodeURIComponent(catalogSlug)}/details/`);
+  if (!data.result) throw new Error("Catalog details returned no result.");
+  return {
+    ...data.result,
+    categories: (data.result.categories ?? []).map((category) => ({
+      ...category,
+      display_name: category.display_name || category.label || category.name,
+    })),
+  };
 }
 
 export async function updateCatalog(businessSlug: string, catalogSlug: string, payload: CatalogPayload) {

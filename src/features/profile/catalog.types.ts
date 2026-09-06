@@ -43,6 +43,11 @@ export type CatalogCategorySearchResponse = {
 
 export type EditableProduct = ProductDetail & {
   is_active?: boolean;
+  categories: CatalogCategory[];
+};
+
+export type CatalogDetailResponse = {
+  result: EditableProduct | null;
 };
 
 export type CatalogGalleryImage = {
