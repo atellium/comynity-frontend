@@ -4,8 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import MobileHeader from "@/components/layout/MobileHeader";
-import { getProductBySlug } from "@/features/businesses/business.service";
-import { createCatalog, getOwnedBusinessInfo, searchCatalogCategories, updateCatalogViaEditEndpoint } from "../profile.service";
+import { createCatalog, getCatalogDetails, getOwnedBusinessInfo, searchCatalogCategories, updateCatalogViaEditEndpoint } from "../profile.service";
 import type { CatalogCategory, CatalogPayload, DoctorSpecifications, EditableProduct } from "../catalog.types";
 
 const inputClass = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-foreground outline-none focus:border-brand";
@@ -21,7 +20,7 @@ export function DoctorEditorScreen({ businessSlug, catalogSlug }: { businessSlug
   const queryClient = useQueryClient();
   const editing = Boolean(catalogSlug);
   const business = useQuery({ queryKey: ["businesses", "mine", businessSlug], queryFn: () => getOwnedBusinessInfo(businessSlug) });
-  const detail = useQuery({ queryKey: ["doctor", catalogSlug], queryFn: () => getProductBySlug(catalogSlug!), enabled: editing });
+  const detail = useQuery({ queryKey: ["businesses", "mine", businessSlug, "catalog", catalogSlug, "details"], queryFn: () => getCatalogDetails(businessSlug, catalogSlug!), enabled: editing });
   const [initialized, setInitialized] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -46,7 +45,7 @@ export function DoctorEditorScreen({ businessSlug, catalogSlug }: { businessSlug
     queueMicrotask(() => {
       setName(doctor.name);
       setDescription(doctor.description ?? "");
-      setSpecialties((doctor.categories ?? []) as CatalogCategory[]);
+      setSpecialties(doctor.categories ?? []);
       setQualification(specs?.qualification ?? "");
       setExperienceYears(specs?.experience_years === undefined ? "" : String(specs.experience_years));
       setGender(specs?.gender ?? "");
@@ -159,7 +158,11 @@ function SpecialtyPicker({ selected, onChange }: { selected: CatalogCategory[]; 
   const [search, setSearch] = useState(""); const [term, setTerm] = useState("");
   useEffect(() => { const timeout = window.setTimeout(() => setTerm(search.trim()), 300); return () => window.clearTimeout(timeout); }, [search]);
   const query = useQuery({ queryKey: ["catalog-specialties", term], queryFn: () => searchCatalogCategories(term, "specialty"), enabled: term.length > 0 });
-  return <FormCard title="Specialties"><div className="flex flex-wrap gap-2">{selected.map((item) => <button key={item.id} type="button" onClick={() => onChange(selected.filter((specialty) => specialty.id !== item.id))} className="rounded-full bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand">{item.display_name} <i className="fa-solid fa-xmark ml-1" /></button>)}</div><div className="relative"><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search specialties" className={`${inputClass} pr-11`} />{search && <button type="button" onClick={() => setSearch("")} aria-label="Clear specialty search" className="absolute right-1 top-1 flex size-9 items-center justify-center text-foreground-muted"><i className="fa-solid fa-xmark" /></button>}</div>{term && <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-100">{query.isFetching && <p className="p-3 text-xs text-foreground-muted">Searching...</p>}{query.data?.map((item) => { const chosen = selected.some((specialty) => specialty.id === item.id); return <label key={item.id} className={`flex cursor-pointer items-center gap-3 border-b border-slate-100 p-3 text-sm font-semibold last:border-0 ${chosen ? "bg-slate-50" : "hover:bg-slate-50"}`}><input type="checkbox" checked={chosen} onChange={() => onChange(chosen ? selected.filter((specialty) => specialty.id !== item.id) : [...selected, item])} className="size-4 shrink-0 accent-brand" /><span>{item.display_name}</span></label>; })}{query.data?.length === 0 && <p className="p-3 text-xs text-foreground-muted">No specialties found.</p>}</div>}</FormCard>;
+  return <FormCard title="Specialties"><div className="flex flex-wrap gap-2">{selected.map((item, index) => <button key={categoryKey(item, index)} type="button" onClick={() => onChange(selected.filter((specialty) => specialty.id !== item.id))} className="rounded-full bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand">{item.display_name} <i className="fa-solid fa-xmark ml-1" /></button>)}</div><div className="relative"><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search specialties" className={`${inputClass} pr-11`} />{search && <button type="button" onClick={() => setSearch("")} aria-label="Clear specialty search" className="absolute right-1 top-1 flex size-9 items-center justify-center text-foreground-muted"><i className="fa-solid fa-xmark" /></button>}</div>{term && <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-100">{query.isFetching && <p className="p-3 text-xs text-foreground-muted">Searching...</p>}{query.data?.map((item, index) => { const chosen = selected.some((specialty) => specialty.id === item.id); return <label key={categoryKey(item, index)} className={`flex cursor-pointer items-center gap-3 border-b border-slate-100 p-3 text-sm font-semibold last:border-0 ${chosen ? "bg-slate-50" : "hover:bg-slate-50"}`}><input type="checkbox" checked={chosen} onChange={() => onChange(chosen ? selected.filter((specialty) => specialty.id !== item.id) : [...selected, item])} className="size-4 shrink-0 accent-brand" /><span>{item.display_name}</span></label>; })}{query.data?.length === 0 && <p className="p-3 text-xs text-foreground-muted">No specialties found.</p>}</div>}</FormCard>;
+}
+
+function categoryKey(category: CatalogCategory, index: number) {
+  return `${category.id ?? category.slug ?? category.display_name ?? category.name}-${index}`;
 }
 
 function splitLines(value: string) { return value.split(/[\n,]/).map((item) => item.trim()).filter(Boolean); }
