@@ -190,6 +190,8 @@ export type BusinessDetailOffer = {
 export type BusinessNameDetail = {
   id: string;
   name: string;
+  handle: string;
+  slug: string;
   description: string | null;
   services: string[] | null;
   offerings: string[] | null;

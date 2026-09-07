@@ -83,18 +83,12 @@ function NearbyOfferCard({
 	offer: NearbyOffer;
 	onReadMore: () => void;
 }) {
-	const image = offer.image || offer.business.thumbnail;
-
 	return (
 		<article className="flex w-[82vw] max-w-80 shrink-0 overflow-hidden rounded-2xl border border-border-subtle bg-surface shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-200 dark:border-border-dark-subtle dark:bg-surface-dark-secondary">
 			<div className="relative flex w-28 shrink-0 items-center justify-center overflow-hidden bg-brand-50 text-brand dark:bg-brand-950">
-				{image ? (
-					// The API can return offer images from multiple media paths, so use the browser image loader.
-					// eslint-disable-next-line @next/next/no-img-element
-					<img src={image} alt="" className="absolute inset-0 size-full object-cover" />
-				) : (
-					<i className="fa-solid fa-tags text-3xl" aria-hidden="true" />
-				)}
+				<span className="flex size-10 items-center justify-center rounded-full bg-surface text-brand shadow-xs dark:bg-surface-dark">
+					<i className="fa-solid fa-tag text-sm" aria-hidden="true" />
+				</span>
 			</div>
 			<div className="flex min-w-0 flex-1 flex-col p-3">
 				<h3 className="truncate text-sm font-extrabold text-foreground dark:text-foreground-dark">
@@ -129,7 +123,6 @@ function OfferDetailsSheet({
 	offer: NearbyOffer | null;
 	onClose: () => void;
 }) {
-	const image = offer?.image || offer?.business.thumbnail;
 	const businessQuery = useQuery({
 		queryKey: ["business", "offer-details", offer?.business.slug],
 		queryFn: () => getBusinessNameBySlug(offer!.business.slug),
@@ -144,15 +137,14 @@ function OfferDetailsSheet({
 			closeLabel="Close offer details"
 		>
 			{offer && <div className="px-page pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-5">
-				{image && (
-					<div className="mb-5 h-44 overflow-hidden rounded-2xl bg-brand-50">
-						{/* eslint-disable-next-line @next/next/no-img-element */}
-						<img src={image} alt="" className="size-full object-cover" />
-					</div>
-				)}
-				<h3 className="text-xl font-extrabold text-foreground dark:text-foreground-dark">
-					{offer.title}
-				</h3>
+				<div className="flex items-start gap-3">
+					<span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand dark:bg-brand-950">
+						<i className="fa-solid fa-tag" aria-hidden="true" />
+					</span>
+					<h3 className="min-w-0 flex-1 text-xl font-extrabold text-foreground dark:text-foreground-dark">
+						{offer.title}
+					</h3>
+				</div>
 				<p className="mt-4 whitespace-pre-line text-sm leading-6 text-foreground-muted dark:text-foreground-dark-muted">
 					{offer.description}
 				</p>
