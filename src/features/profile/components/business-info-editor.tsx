@@ -20,9 +20,15 @@ const scheduleDays = [
 ] as const;
 type HoursSlot = { opens_at: string; closes_at: string };
 type HoursByDay = HoursSlot[][];
+type TextListItem = { id: string; name: string };
 type EditorSavePayload =
   | { type: "business"; payload: BusinessUpdatePayload | FormData }
   | { type: "hours"; payload: BusinessHoursUpdatePayload; showHours: boolean };
+
+function createTextListItemId() {
+  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
 
 export function BusinessInfoEditor({ section, business, onClose, onSaved }: { section: BusinessInfoSection; business: OwnedBusinessInfo; onClose: () => void; onSaved: (business: OwnedBusinessInfo) => void }) {
   const cityValue = typeof business.location.city === "string" ? null : business.location.city;
@@ -33,6 +39,7 @@ export function BusinessInfoEditor({ section, business, onClose, onSaved }: { se
     facebook: business.contact.social_urls?.facebook ?? "", instagram: business.contact.social_urls?.instagram ?? "", youtube: business.contact.social_urls?.youtube ?? "", linkedin: business.contact.social_urls?.linkedin ?? "", x: business.contact.social_urls?.x ?? "",
   });
   const [categories, setCategories] = useState<BusinessCategoryOption[]>((business.categories ?? []).filter((item) => item.id !== undefined).map((item) => ({ id: item.id!, name: item.display_name, display_name: item.display_name, label: item.display_name, slug: item.slug })));
+  const [offerings, setOfferings] = useState<TextListItem[]>(() => (business.offerings ?? []).map((name) => ({ id: createTextListItemId(), name })));
   const [city, setCity] = useState<BusinessCityOption | null>(cityValue ? { id: cityValue.id ?? 0, name: cityValue.name, slug: "", tier: 0, state: { id: cityValue.state_id ?? 0, name: cityValue.state ?? "", slug: "", code: "" } } : null);
   const [alternateNumbers, setAlternateNumbers] = useState((business.contact.alternate_numbers ?? []).slice(0, 4).map(localPhone));
   const [fullAddress, setFullAddress] = useState(business.visibility.display_full_address); const [showHours, setShowHours] = useState(business.visibility.display_business_hours);
@@ -70,7 +77,14 @@ export function BusinessInfoEditor({ section, business, onClose, onSaved }: { se
       return;
     }
     let payload: BusinessUpdatePayload | FormData;
-    if (section === "basic") payload = { name: values.name, description: values.description, established_year: Number(values.established_year) };
+    if (section === "basic") {
+      const offeringNames = offerings.map((item) => item.name.trim());
+      if (offeringNames.some((name) => !name)) {
+        setError("Enter a name for every offering or delete empty items.");
+        return;
+      }
+      payload = { name: values.name, description: values.description, established_year: Number(values.established_year), offerings: offeringNames };
+    }
     else if (section === "categories") payload = { categories: categories.map((item) => item.id) };
     else if (section === "address") payload = { address: values.address, landmark: values.landmark, locality: values.locality, city: city?.id, postal_code: values.postal_code, display_full_address: fullAddress };
     else if (section === "contact") payload = { phone: indianPhone(values.phone), whatsapp: indianPhone(values.whatsapp), email: values.email, website: values.website, alternate_numbers: alternateNumbers.map(indianPhone).filter(Boolean) };
@@ -85,7 +99,7 @@ export function BusinessInfoEditor({ section, business, onClose, onSaved }: { se
     {section === "contact" && <>{phoneField("phone", "Phone")}{phoneField("whatsapp", "WhatsApp")}<div><p className="mb-2 text-xs font-bold">Alternate numbers</p><div className="space-y-2">{alternateNumbers.map((number, index) => <div key={index} className="flex gap-2"><div className="flex h-11 min-w-0 flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-brand"><span className="flex items-center border-r border-slate-100 px-3 text-sm font-semibold text-slate-500">+91</span><input type="tel" inputMode="numeric" maxLength={10} value={number} onChange={(event) => setAlternateNumbers(alternateNumbers.map((item, itemIndex) => itemIndex === index ? event.target.value.replace(/\D/g, "").slice(0, 10) : item))} className="min-w-0 flex-1 px-3 text-sm font-normal outline-none" /></div><button type="button" aria-label={`Remove alternate number ${index + 1}`} onClick={() => setAlternateNumbers(alternateNumbers.filter((_, itemIndex) => itemIndex !== index))} className="size-11 shrink-0 rounded-xl bg-red-50 text-danger"><i className="fa-solid fa-xmark" /></button></div>)}</div>{alternateNumbers.length < 4 && <button type="button" onClick={() => setAlternateNumbers([...alternateNumbers, ""])} className="mt-2 text-xs font-extrabold text-brand"><i className="fa-solid fa-plus mr-1" />Add number</button>}</div>{field("email", "Email", "email")}{field("website", "Website", "url")}</>}
     {section === "social" && <>{field("facebook", "Facebook", "url")}{field("instagram", "Instagram", "url")}{field("youtube", "YouTube", "url")}{field("linkedin", "LinkedIn", "url")}{field("x", "X", "url")}</>}
     {section === "hours" && <><Switch label="Show business hours" checked={showHours} onChange={setShowHours} />{showHours && <BusinessHoursEditor value={hoursByDay} onChange={setHoursByDay} />}</>}
-  </section>{error && <p role="alert" className="text-sm font-semibold text-danger">{error}</p>}<button type="submit" disabled={mutation.isPending} className="h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-60">{mutation.isPending ? "Saving…" : "Save changes"}</button></form></div></FullScreenModal>;
+  </section>{section === "basic" && <section className="rounded-2xl border border-slate-100 bg-white p-4"><TextListEditor label="Offerings" emptyLabel="No offerings added" placeholder="Offering name" addLabel="Add offering" items={offerings} onChange={setOfferings} disabled={mutation.isPending} /></section>}{error && <p role="alert" className="text-sm font-semibold text-danger">{error}</p>}<button type="submit" disabled={mutation.isPending} className="h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-60">{mutation.isPending ? "Saving…" : "Save changes"}</button></form></div></FullScreenModal>;
 }
 
 function BusinessHoursEditor({ value, onChange }: { value: HoursByDay; onChange: (value: HoursByDay) => void }) {
@@ -158,6 +172,54 @@ function BusinessHoursEditor({ value, onChange }: { value: HoursByDay; onChange:
           </section>
         );
       })}
+    </div>
+  );
+}
+
+function TextListEditor({ label, emptyLabel, placeholder, addLabel, items, onChange, disabled }: { label: string; emptyLabel: string; placeholder: string; addLabel: string; items: TextListItem[]; onChange: (items: TextListItem[]) => void; disabled: boolean }) {
+  function updateItem(id: string, name: string) {
+    onChange(items.map((item) => item.id === id ? { ...item, name } : item));
+  }
+
+  function removeItem(id: string) {
+    onChange(items.filter((item) => item.id !== id));
+  }
+
+  function moveItem(index: number, direction: -1 | 1) {
+    const destination = index + direction;
+    if (destination < 0 || destination >= items.length) return;
+    const next = [...items];
+    [next[index], next[destination]] = [next[destination], next[index]];
+    onChange(next);
+  }
+
+  function addItem() {
+    onChange([...items, { id: createTextListItemId(), name: "" }]);
+  }
+
+  return (
+    <div>
+      <p className="mb-2 text-xs font-bold">{label}</p>
+      {items.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center">
+          <i className="fa-solid fa-screwdriver-wrench text-2xl text-brand" aria-hidden="true" />
+          <p className="mt-3 text-sm font-extrabold text-foreground">{emptyLabel}</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+          {items.map((item, index) => (
+            <div key={item.id} className="flex items-center gap-2 border-b border-slate-100 p-3 last:border-b-0">
+              <input value={item.name} onChange={(event) => updateItem(item.id, event.target.value)} disabled={disabled} placeholder={placeholder} aria-label={`${label} ${index + 1}`} className="h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-foreground outline-none focus:border-brand disabled:opacity-60" />
+              <div className="flex shrink-0 flex-col">
+                <button type="button" onClick={() => moveItem(index, -1)} disabled={index === 0 || disabled} aria-label={`Move ${label.toLowerCase()} ${index + 1} up`} className="flex size-6 items-center justify-center text-brand disabled:text-slate-200"><i className="fa-solid fa-chevron-up text-xs" aria-hidden="true" /></button>
+                <button type="button" onClick={() => moveItem(index, 1)} disabled={index === items.length - 1 || disabled} aria-label={`Move ${label.toLowerCase()} ${index + 1} down`} className="flex size-6 items-center justify-center text-brand disabled:text-slate-200"><i className="fa-solid fa-chevron-down text-xs" aria-hidden="true" /></button>
+              </div>
+              <button type="button" onClick={() => removeItem(item.id)} disabled={disabled} aria-label={`Delete ${label.toLowerCase()} ${index + 1}`} className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-red-50 text-danger disabled:opacity-60"><i className="fa-solid fa-trash" aria-hidden="true" /></button>
+            </div>
+          ))}
+        </div>
+      )}
+      <button type="button" onClick={addItem} disabled={disabled} className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-brand-200 bg-white text-sm font-extrabold text-brand disabled:opacity-60"><i className="fa-solid fa-plus" aria-hidden="true" />{addLabel}</button>
     </div>
   );
 }

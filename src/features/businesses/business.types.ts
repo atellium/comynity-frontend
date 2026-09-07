@@ -29,6 +29,7 @@ export type BusinessListItem = {
   publication_status: string;
   last_updated: string;
   categories: BusinessCategory[] | null;
+  offerings: string[] | null;
   media: { thumbnail: string | null; gallery?: string[] };
   is_verified: boolean;
   hours: BusinessHoursStatus | null;
@@ -191,6 +192,7 @@ export type BusinessNameDetail = {
   name: string;
   description: string | null;
   services: string[] | null;
+  offerings: string[] | null;
   is_verified: boolean;
   categories: BusinessCategory[] | null;
   media: {

@@ -27,7 +27,7 @@ export async function getOwnedBusinesses() {
   };
 }
 
-export async function searchCatalogCategories(search: string, type?: "specialty") {
+export async function searchCatalogCategories(search: string, type?: "product" | "specialty") {
   const { data } = await protectedApiClient.get<CatalogCategorySearchResponse>("/api/catalogs/categories/", { params: { search, type } });
   return (data.results ?? []).map((category) => ({
     ...category,

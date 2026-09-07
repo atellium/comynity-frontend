@@ -84,6 +84,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
 	const [showFixedActions, setShowFixedActions] = useState(false);
 	const primaryCategory = business.categories?.[0];
 	const categories = (business.categories ?? []).map((category) => category.display_name).join(" · ");
+	const offerings = (business.offerings ?? []).map((offering) => offering.trim()).filter(Boolean).join(" · ");
 	const { location, hours } = business;
 	const showHours = hasDisplayableBusinessHours(hours);
 	const similarBusinessesQuery = useQuery({
@@ -158,7 +159,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
 					</span>
 				)}
 				<h1 className="text-xl font-extrabold leading-tight tracking-tight text-foreground dark:text-foreground-dark">{business.name}</h1>
-				{categories && <p className="mt-1 text-sm font-semibold text-foreground-muted dark:text-foreground-dark-muted">{categories}</p>}
+				{(offerings || categories) && <p className="mt-1 text-sm font-semibold text-foreground-muted dark:text-foreground-dark-muted">{offerings || categories}</p>}
 				{address && (
 					<p className="mt-3 flex items-start gap-2 text-sm text-foreground-secondary dark:text-foreground-dark-secondary">
 						<MapPin size={17} className="mt-0.5 shrink-0 text-foreground-muted" aria-hidden="true" />

@@ -39,6 +39,10 @@ export function BusinessCard({ business }: { business: BusinessListItem }) {
 	const categoryText = (business.categories ?? [])
 		.map((category) => category.display_name)
 		.join(" · ");
+	const offeringsText = (business.offerings ?? [])
+		.map((offering) => offering.trim())
+		.filter(Boolean)
+		.join(" · ");
 	const cityName = getBusinessCityName(business.location.city);
 	const addressParts = business.location.display_full_address === false
 		? [business.location.locality, cityName]
@@ -126,7 +130,7 @@ export function BusinessCard({ business }: { business: BusinessListItem }) {
 						{business.name}
 					</h2>
 					<p className="mt-1 truncate text-xs font-semibold text-slate-500 dark:text-slate-400">
-						{categoryText}
+						{offeringsText || categoryText}
 					</p>
 					<p className="mt-1.5 flex min-w-0 items-center gap-1 text-sm text-foreground-secondary dark:text-foreground-dark-secondary">
 						<MapPin
