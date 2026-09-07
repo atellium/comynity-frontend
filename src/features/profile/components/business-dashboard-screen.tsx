@@ -14,6 +14,7 @@ export function BusinessDashboardScreen({ slug }: { slug: string }) {
   const [downloading, setDownloading] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
   const { data } = useQuery({ queryKey: ["businesses", "mine", slug], queryFn: () => getOwnedBusinessInfo(slug) });
+  const showDoctors = data ? hasDoctorCategory(data.categories) : false;
 
   function openQrCode() {
     setQrUrl(new URL(`/business/${encodeURIComponent(slug)}`, window.location.origin).href);
@@ -75,11 +76,11 @@ export function BusinessDashboardScreen({ slug }: { slug: string }) {
         <span className="min-w-0 flex-1"><span className="block text-sm font-extrabold text-foreground">Services</span><span className="mt-0.5 block text-xs text-foreground-muted">View and manage your services.</span></span>
         <i className="fa-solid fa-chevron-right text-xs text-foreground-muted" aria-hidden="true" />
       </Link>
-      <Link href={`/business/${encodeURIComponent(slug)}/manage/doctors`} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
+      {showDoctors && <Link href={`/business/${encodeURIComponent(slug)}/manage/doctors`} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand" aria-hidden="true"><i className="fa-solid fa-user-doctor" /></span>
         <span className="min-w-0 flex-1"><span className="block text-sm font-extrabold text-foreground">Doctors</span><span className="mt-0.5 block text-xs text-foreground-muted">View and manage doctor profiles.</span></span>
         <i className="fa-solid fa-chevron-right text-xs text-foreground-muted" aria-hidden="true" />
-      </Link>
+      </Link>}
       <Link href={`/business/${encodeURIComponent(slug)}/manage/offers`} className="flex items-center gap-3 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand" aria-hidden="true"><i className="fa-solid fa-tags" /></span>
         <span className="min-w-0 flex-1"><span className="block text-sm font-extrabold text-foreground">Offers</span><span className="mt-0.5 block text-xs text-foreground-muted">Create and manage your business offers.</span></span>
@@ -112,4 +113,12 @@ export function BusinessDashboardScreen({ slug }: { slug: string }) {
 
 function qrCodeUrl(value: string, size: number) {
   return `/api/business-qr?size=${size}&data=${encodeURIComponent(value)}`;
+}
+
+function hasDoctorCategory(categories: Array<{ slug?: string; name?: string; display_name?: string } | null> | null | undefined) {
+  return (categories ?? []).some((category) =>
+    category && [category.slug, category.name, category.display_name]
+      .filter(Boolean)
+      .some((value) => /pharmacy|clinic/i.test(value!)),
+  );
 }
