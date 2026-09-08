@@ -10,6 +10,7 @@ import { useState } from "react";
 import { BottomSheetModal } from "@/components/modals";
 import { SaveButton } from "@/features/saved-items";
 import { getBusinessNameBySlug, getBusinessProducts, getProductBySlug } from "../business.service";
+import { getDemoBusinessProductsPage, getDemoProductBySlug } from "../demo-products";
 import { ProductImageGallery } from "./product-image-gallery";
 
 const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", minimumFractionDigits: 0, maximumFractionDigits: 2 });
@@ -31,18 +32,34 @@ export function ProductDetailPage({ slug }: { slug: string }) {
   const [shareOpen, setShareOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
   const [copied, setCopied] = useState(false);
-  const query = useQuery({ queryKey: ["product", "detail", slug], queryFn: () => getProductBySlug(slug) });
+  const isDemoProduct = slug.startsWith("demo-");
+  const query = useQuery({
+    queryKey: ["product", "detail", slug],
+    queryFn: async () => {
+      if (isDemoProduct) {
+        const demoProduct = getDemoProductBySlug(slug);
+        if (demoProduct) return demoProduct;
+      }
+      try {
+        return await getProductBySlug(slug);
+      } catch (error) {
+        const demoProduct = getDemoProductBySlug(slug);
+        if (!demoProduct || !axios.isAxiosError(error) || error.response?.status !== 404) throw error;
+        return demoProduct;
+      }
+    },
+  });
   const similarCategory = query.data?.categories[0];
   const similarProductsQuery = useQuery({
     queryKey: ["business", query.data?.business.slug, "products", "similar", similarCategory?.slug],
     queryFn: () => getBusinessProducts(query.data?.business.slug ?? "", { category: similarCategory?.slug, pageSize: 6 }),
-    enabled: Boolean(query.data?.business.slug && similarCategory?.slug),
+    enabled: Boolean(!isDemoProduct && query.data?.business.slug && similarCategory?.slug),
     select: (data) => data.results.filter((item) => item.slug !== slug).slice(0, 4),
   });
   const businessContactQuery = useQuery({
     queryKey: ["business", "detail", query.data?.business.slug],
     queryFn: () => getBusinessNameBySlug(query.data?.business.slug ?? ""),
-    enabled: Boolean(query.data?.business.slug),
+    enabled: Boolean(!isDemoProduct && query.data?.business.slug),
   });
   const error = axios.isAxiosError(query.error) ? String(query.error.response?.data?.detail ?? query.error.message) : query.error instanceof Error ? query.error.message : "Unable to load this product.";
 
@@ -55,7 +72,10 @@ export function ProductDetailPage({ slug }: { slug: string }) {
   const discount = originalPrice && originalPrice > price ? Math.round((1 - price / originalPrice) * 100) : 0;
   const isBargainAvailable = product.specifications.is_bargain === true;
   const highlightedFields = product.custom_fields;
-  const similarProducts = similarProductsQuery.data ?? [];
+  const demoSimilarProducts = businessContactQuery.data && slug.startsWith("demo-")
+    ? (getDemoBusinessProductsPage(businessContactQuery.data, similarCategory?.slug)?.results ?? []).filter((item) => item.slug !== slug).slice(0, 4)
+    : [];
+  const similarProducts = similarProductsQuery.data?.length ? similarProductsQuery.data : demoSimilarProducts;
   const whatsappNumber = businessContactQuery.data?.contact.whatsapp?.replace(/\D/g, "") ?? "";
   const phoneNumber = businessContactQuery.data?.contact.phone?.replace(/\D/g, "") ?? "";
   const businessLocation = businessContactQuery.data?.location;

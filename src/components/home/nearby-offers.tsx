@@ -83,20 +83,22 @@ function NearbyOfferCard({
 	offer: NearbyOffer;
 	onReadMore: () => void;
 }) {
-	const image = offer.image || offer.business.thumbnail;
-
 	return (
-		<article className="flex w-[82vw] max-w-80 shrink-0 overflow-hidden rounded-2xl border border-border-subtle bg-surface shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-200 dark:border-border-dark-subtle dark:bg-surface-dark-secondary">
-			<div className="relative flex w-28 shrink-0 items-center justify-center overflow-hidden bg-brand-50 text-brand dark:bg-brand-950">
-				{image ? (
-					// The API can return offer images from multiple media paths, so use the browser image loader.
-					// eslint-disable-next-line @next/next/no-img-element
-					<img src={image} alt="" className="absolute inset-0 size-full object-cover" />
-				) : (
-					<i className="fa-solid fa-tags text-3xl" aria-hidden="true" />
-				)}
-			</div>
-			<div className="flex min-w-0 flex-1 flex-col p-3">
+		<article
+			role="button"
+			tabIndex={0}
+			onClick={onReadMore}
+			onKeyDown={(event) => {
+				if (event.key === "Enter" || event.key === " ") {
+					event.preventDefault();
+					onReadMore();
+				}
+			}}
+			className="relative flex w-[82vw] max-w-80 shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-border-subtle bg-surface shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand dark:border-border-dark-subtle dark:bg-surface-dark-secondary"
+			aria-label={`View offer details for ${offer.title}`}
+		>
+			<i className="fa-solid fa-tag pointer-events-none absolute -bottom-9 -right-9 text-[6.5rem] text-brand opacity-10 dark:opacity-15" aria-hidden="true" />
+			<div className="flex min-w-0 flex-1 flex-col p-3 pl-5">
 				<h3 className="truncate text-sm font-extrabold text-foreground dark:text-foreground-dark">
 					{offer.title}
 				</h3>
@@ -106,17 +108,7 @@ function NearbyOfferCard({
 				<p className="mt-2 line-clamp-2 text-xs leading-4 font-medium text-foreground-muted dark:text-foreground-dark-muted">
 					{offer.description}
 				</p>
-				<a
-					href={`/offers#offer-${offer.id}`}
-					onClick={(event) => {
-						event.preventDefault();
-						onReadMore();
-					}}
-					className="mt-3 inline-flex items-center gap-1 self-start text-xs font-extrabold text-brand underline-offset-4 hover:underline dark:text-brand-300"
-				>
-					Read more
-					<i className="fa-solid fa-chevron-right text-[9px]" aria-hidden="true" />
-				</a>
+				<i className="fa-solid fa-chevron-right mt-auto self-end text-xs text-brand dark:text-brand-300" aria-hidden="true" />
 			</div>
 		</article>
 	);
@@ -129,7 +121,6 @@ function OfferDetailsSheet({
 	offer: NearbyOffer | null;
 	onClose: () => void;
 }) {
-	const image = offer?.image || offer?.business.thumbnail;
 	const businessQuery = useQuery({
 		queryKey: ["business", "offer-details", offer?.business.slug],
 		queryFn: () => getBusinessNameBySlug(offer!.business.slug),
@@ -144,15 +135,14 @@ function OfferDetailsSheet({
 			closeLabel="Close offer details"
 		>
 			{offer && <div className="px-page pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-5">
-				{image && (
-					<div className="mb-5 h-44 overflow-hidden rounded-2xl bg-brand-50">
-						{/* eslint-disable-next-line @next/next/no-img-element */}
-						<img src={image} alt="" className="size-full object-cover" />
-					</div>
-				)}
-				<h3 className="text-xl font-extrabold text-foreground dark:text-foreground-dark">
-					{offer.title}
-				</h3>
+				<div className="flex items-start gap-3">
+					<span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand dark:bg-brand-950">
+						<i className="fa-solid fa-tag" aria-hidden="true" />
+					</span>
+					<h3 className="min-w-0 flex-1 text-xl font-extrabold text-foreground dark:text-foreground-dark">
+						{offer.title}
+					</h3>
+				</div>
 				<p className="mt-4 whitespace-pre-line text-sm leading-6 text-foreground-muted dark:text-foreground-dark-muted">
 					{offer.description}
 				</p>

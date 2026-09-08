@@ -9,6 +9,7 @@ import { BottomSheetModal } from "@/components/modals";
 import { getBusinesses } from "../../business.service";
 import type { BusinessNameDetail, BusinessScheduleSlot } from "../../business.types";
 import { getBusinessCityName, hasDisplayableBusinessHours } from "../../business.utils";
+import { getDemoBusinessProducts } from "../../demo-products";
 import { BusinessProductsSection } from "./business-products";
 import { BusinessOffersSection } from "./business-offers";
 import { BusinessGallery } from "./business-gallery";
@@ -138,6 +139,9 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
       return url ? [{ label: socialLabel(network), href: externalUrl(url), icon: socialIcon(network), color: socialColor(network) }] : [];
     });
   const services = (business.services ?? []).map((service) => service.trim()).filter(Boolean);
+  const realProducts = business.product;
+  const hasRealProducts = Boolean((realProducts?.items?.length ?? 0) > 0);
+  const displayProducts = hasRealProducts ? realProducts : getDemoBusinessProducts(business);
 
 	useEffect(() => {
 		function updateVisibility() {
@@ -211,7 +215,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
           </section>
         )}
         <BusinessDoctorsSection businessSlug={slug} phone={business.contact.phone} />
-        <BusinessProductsSection product={business.product} businessSlug={slug} />
+        <BusinessProductsSection product={displayProducts} businessSlug={slug} />
         <BusinessGallery business={business} />
         {contactOptions.length > 0 && (
           <section className="mt-6" aria-labelledby="business-contact-heading">
