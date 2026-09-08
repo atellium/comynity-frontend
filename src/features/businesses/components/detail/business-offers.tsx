@@ -15,14 +15,20 @@ export function BusinessOffersSection({ offers }: { offers: BusinessDetailOffer[
         {offers.map((offer) => (
             <article
               key={offer.id}
-              className={`${offers.length === 1 ? "w-full" : "w-[76vw] max-w-72"} flex min-h-32 shrink-0 overflow-hidden rounded-2xl border border-border-subtle bg-surface shadow-xs dark:border-border-dark-subtle dark:bg-surface-dark-secondary`}
+              role="button"
+              tabIndex={0}
+              onClick={() => setSelectedOffer(offer)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setSelectedOffer(offer);
+                }
+              }}
+              aria-label={`View offer details for ${offer.title}`}
+              className={`${offers.length === 1 ? "w-full" : "w-[76vw] max-w-72"} relative flex min-h-32 shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-border-subtle bg-surface shadow-xs transition-colors hover:border-brand-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand dark:border-border-dark-subtle dark:bg-surface-dark-secondary`}
             >
-              <div className="flex w-16 shrink-0 items-center justify-center bg-brand-50 text-brand dark:bg-brand-950">
-                <span className="flex size-9 items-center justify-center rounded-full bg-surface text-brand shadow-xs dark:bg-surface-dark">
-                  <i className="fa-solid fa-tag text-sm" aria-hidden="true" />
-                </span>
-              </div>
-              <div className="flex min-w-0 flex-1 flex-col p-3">
+              <i className="fa-solid fa-tag pointer-events-none absolute -bottom-7 -right-7 text-[5.25rem] text-brand opacity-10 dark:opacity-15" aria-hidden="true" />
+              <div className="flex min-w-0 flex-1 flex-col p-3 pl-5">
                 <h3 className="truncate text-sm font-extrabold text-foreground dark:text-foreground-dark">
                   {offer.title}
                 </h3>
@@ -35,10 +41,7 @@ export function BusinessOffersSection({ offers }: { offers: BusinessDetailOffer[
                   <i className="fa-solid fa-clock mr-1.5" aria-hidden="true" />
                   Ends {formatOfferDate(offer.expires_at)}
                 </p>
-                <button type="button" onClick={() => setSelectedOffer(offer)} className="mt-auto inline-flex items-center gap-1 self-end text-xs font-extrabold text-brand underline-offset-4 hover:underline dark:text-brand-300">
-                  Read more
-                  <i className="fa-solid fa-chevron-right text-[9px]" aria-hidden="true" />
-                </button>
+                <i className="fa-solid fa-chevron-right mt-auto self-end text-xs text-brand dark:text-brand-300" aria-hidden="true" />
               </div>
             </article>
           ))}

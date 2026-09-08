@@ -84,13 +84,21 @@ function NearbyOfferCard({
 	onReadMore: () => void;
 }) {
 	return (
-		<article className="flex w-[82vw] max-w-80 shrink-0 overflow-hidden rounded-2xl border border-border-subtle bg-surface shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-200 dark:border-border-dark-subtle dark:bg-surface-dark-secondary">
-			<div className="relative flex w-28 shrink-0 items-center justify-center overflow-hidden bg-brand-50 text-brand dark:bg-brand-950">
-				<span className="flex size-10 items-center justify-center rounded-full bg-surface text-brand shadow-xs dark:bg-surface-dark">
-					<i className="fa-solid fa-tag text-sm" aria-hidden="true" />
-				</span>
-			</div>
-			<div className="flex min-w-0 flex-1 flex-col p-3">
+		<article
+			role="button"
+			tabIndex={0}
+			onClick={onReadMore}
+			onKeyDown={(event) => {
+				if (event.key === "Enter" || event.key === " ") {
+					event.preventDefault();
+					onReadMore();
+				}
+			}}
+			className="relative flex w-[82vw] max-w-80 shrink-0 cursor-pointer overflow-hidden rounded-2xl border border-border-subtle bg-surface shadow-xs transition-all hover:-translate-y-0.5 hover:border-brand-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand dark:border-border-dark-subtle dark:bg-surface-dark-secondary"
+			aria-label={`View offer details for ${offer.title}`}
+		>
+			<i className="fa-solid fa-tag pointer-events-none absolute -bottom-9 -right-9 text-[6.5rem] text-brand opacity-10 dark:opacity-15" aria-hidden="true" />
+			<div className="flex min-w-0 flex-1 flex-col p-3 pl-5">
 				<h3 className="truncate text-sm font-extrabold text-foreground dark:text-foreground-dark">
 					{offer.title}
 				</h3>
@@ -100,17 +108,7 @@ function NearbyOfferCard({
 				<p className="mt-2 line-clamp-2 text-xs leading-4 font-medium text-foreground-muted dark:text-foreground-dark-muted">
 					{offer.description}
 				</p>
-				<a
-					href={`/offers#offer-${offer.id}`}
-					onClick={(event) => {
-						event.preventDefault();
-						onReadMore();
-					}}
-					className="mt-3 inline-flex items-center gap-1 self-start text-xs font-extrabold text-brand underline-offset-4 hover:underline dark:text-brand-300"
-				>
-					Read more
-					<i className="fa-solid fa-chevron-right text-[9px]" aria-hidden="true" />
-				</a>
+				<i className="fa-solid fa-chevron-right mt-auto self-end text-xs text-brand dark:text-brand-300" aria-hidden="true" />
 			</div>
 		</article>
 	);
