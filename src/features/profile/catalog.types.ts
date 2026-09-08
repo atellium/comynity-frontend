@@ -29,6 +29,7 @@ export type CatalogPayload = {
   categories: number[];
   is_featured: boolean;
   is_active: boolean;
+  sort_order?: number;
 };
 
 export type CatalogCategory = BusinessProductCategory & {

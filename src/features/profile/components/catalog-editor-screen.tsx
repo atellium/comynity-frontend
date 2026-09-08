@@ -33,6 +33,7 @@ export function CatalogEditorScreen({ businessSlug, catalogSlug }: { businessSlu
   const [isFeatured, setIsFeatured] = useState(false);
   const [isBestseller, setIsBestseller] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  const [sortOrder, setSortOrder] = useState("");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -49,6 +50,7 @@ export function CatalogEditorScreen({ businessSlug, catalogSlug }: { businessSlu
       setCustomFields((product.custom_fields ?? []).map(({ title, value }) => ({ title, value })));
       setCategories((product.categories ?? []) as CatalogCategory[]);
       setIsBargain(product.specifications?.is_bargain === true); setIsAvailable(product.specifications?.is_available !== false); setIsBestseller(product.specifications?.is_bestseller === true);
+      setSortOrder(product.sort_order === undefined || product.sort_order === null ? "" : String(product.sort_order));
       setIsFeatured(product.is_featured); setIsActive(product.is_active !== false); setInitialized(true);
     });
     return () => { cancelled = true; };
@@ -62,6 +64,12 @@ export function CatalogEditorScreen({ businessSlug, catalogSlug }: { businessSlu
   const remove = useMutation({ mutationFn: () => deleteCatalog(businessSlug, catalogSlug!), onSuccess: async () => { setIsRedirecting(true); await queryClient.invalidateQueries({ queryKey: ["businesses", businessSlug, "manage-products"] }); router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/products`); }, onError: () => setIsRedirecting(false) });
   const isBusy = save.isPending || remove.isPending || isRedirecting;
 
+  function changeSortOrder(delta: number) {
+    const current = Number(sortOrder);
+    const next = Math.max(0, (Number.isFinite(current) ? current : 0) + delta);
+    setSortOrder(String(next));
+  }
+
   function submit(event: FormEvent) {
     event.preventDefault();
     if (isBusy) return;
@@ -74,7 +82,7 @@ export function CatalogEditorScreen({ businessSlug, catalogSlug }: { businessSlu
       ...(priceType === "fixed" && originalPrice ? { original_price: originalPrice } : {}),
       ...(priceType === "range" ? { max_price: maxPrice } : {}),
       variants: variants.filter((item) => item.name.trim() && item.values.some((value) => value.trim())).map((item) => ({ name: item.name.trim(), type: "text", values: item.values.map((value) => ({ value: value.trim() })).filter((item) => item.value) })),
-      specifications: { is_bargain: priceType === "ask" ? false : isBargain, is_available: isAvailable, is_bestseller: isBestseller }, custom_fields: customFields.filter((item) => item.title.trim() && item.value.trim()), categories: categories.map((item) => item.id), is_featured: isFeatured, is_active: isActive };
+      specifications: { is_bargain: priceType === "ask" ? false : isBargain, is_available: isAvailable, is_bestseller: isBestseller }, custom_fields: customFields.filter((item) => item.title.trim() && item.value.trim()), categories: categories.map((item) => item.id), is_featured: isFeatured, is_active: isActive, ...(Number(sortOrder) > 0 ? { sort_order: Number(sortOrder) } : {}) };
     save.mutate(payload, { onError: () => setError(`Unable to ${editing ? "update" : "create"} product.`) });
   }
 
@@ -87,7 +95,7 @@ export function CatalogEditorScreen({ businessSlug, catalogSlug }: { businessSlu
     <FormCard title="Pricing"><Field label="Price type"><select value={priceType} onChange={(e) => setPriceType(e.target.value as CatalogPriceType)} className={inputClass}><option value="fixed">Fixed</option><option value="starts_from">Starts From</option><option value="ask">Ask for price</option><option value="range">Range</option></select></Field>{priceType !== "ask" && <><Field label={priceType === "range" ? "Minimum price" : "Price"}><input type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder={priceType === "range" ? "Enter minimum price" : "Enter price"} className={inputClass} /></Field>{priceType === "range" && <Field label="Maximum price"><input type="number" min="0" step="0.01" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Enter maximum price" className={inputClass} /></Field>}{priceType === "fixed" && <Field label="MRP price"><input type="number" min="0" step="0.01" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} placeholder="Enter MRP price" className={inputClass} /></Field>}<Toggle label="Bargaining available" checked={isBargain} onChange={setIsBargain} /></>}</FormCard>
     <VariantEditor rows={variants} setRows={setVariants} />
     <DynamicRows title="Custom fields" addLabel="Add field" rows={customFields} setRows={setCustomFields} first="Title" second="Value" />
-    <FormCard title="Settings"><Toggle label="Available" checked={isAvailable} onChange={setIsAvailable} /><Toggle label="Featured" checked={isFeatured} onChange={setIsFeatured} /><Toggle label="Bestseller" checked={isBestseller} onChange={setIsBestseller} /><Toggle label="Active" checked={isActive} onChange={setIsActive} /></FormCard>
+    <FormCard title="Settings"><Field label="Sort order"><div className="flex h-11 overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-brand"><button type="button" onClick={() => changeSortOrder(-1)} disabled={!sortOrder || Number(sortOrder) <= 0} aria-label="Decrease sort order" className="flex w-11 shrink-0 items-center justify-center border-r border-slate-100 text-foreground-muted disabled:text-slate-300"><i className="fa-solid fa-minus" aria-hidden="true" /></button><input type="number" min="0" step="1" inputMode="numeric" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} placeholder="Lower numbers appear first" className="min-w-0 flex-1 px-3 text-center text-sm font-normal text-foreground outline-none" /><button type="button" onClick={() => changeSortOrder(1)} aria-label="Increase sort order" className="flex w-11 shrink-0 items-center justify-center border-l border-slate-100 text-brand"><i className="fa-solid fa-plus" aria-hidden="true" /></button></div><span className="mt-1.5 block text-[11px] font-medium text-foreground-muted">0 means no sort order will be applied.</span></Field><Toggle label="Available" checked={isAvailable} onChange={setIsAvailable} /><Toggle label="Featured" checked={isFeatured} onChange={setIsFeatured} /><Toggle label="Bestseller" checked={isBestseller} onChange={setIsBestseller} /><Toggle label="Active" checked={isActive} onChange={setIsActive} /></FormCard>
     {error && <p role="alert" className="text-sm font-semibold text-danger">{error}</p>}
     <button type="submit" disabled={isBusy} className="h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-60">{isBusy ? "Saving..." : editing ? "Save changes" : "Add product"}</button>
     {editing && <button type="button" disabled={isBusy} onClick={() => setDeleteOpen(true)} className="h-12 w-full rounded-xl border border-red-200 bg-white text-sm font-extrabold text-danger disabled:opacity-60">Delete product</button>}

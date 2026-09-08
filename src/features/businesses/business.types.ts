@@ -97,6 +97,7 @@ export type BusinessProduct = {
   specifications?: Record<string, string | number | boolean | null>;
   is_featured: boolean;
   primary_image: string | null;
+  sort_order?: number;
 };
 
 export type BusinessProductsListResponse = {
