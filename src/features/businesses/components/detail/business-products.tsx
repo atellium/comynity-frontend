@@ -62,7 +62,7 @@ export function BusinessProductsSection({ product, businessSlug }: { product: Bu
               <article key={item.id} className="relative min-w-0">
                 <SaveButton itemType="product" objectId={item.id} className="absolute right-2 top-2 z-10 flex size-9 items-center justify-center rounded-full bg-white/90 text-brand shadow-sm" />
                 <Link href={`/product/${encodeURIComponent(item.slug)}`} className="block">
-                  <div className="relative aspect-square overflow-hidden rounded-xl bg-surface-tertiary dark:bg-surface-dark-tertiary">
+                  <div className="relative aspect-square overflow-hidden rounded-xl border border-black/5 bg-surface-tertiary shadow-[0_1px_4px_rgba(15,23,42,0.06)] dark:border-white/10 dark:bg-surface-dark-tertiary dark:shadow-none">
                     <Image
                       src={item.primary_image || "/images/default.jpg"}
                       alt={item.name}
