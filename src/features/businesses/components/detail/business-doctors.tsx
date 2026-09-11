@@ -43,7 +43,7 @@ export function BusinessDoctorsSection({ businessSlug, phone }: { businessSlug: 
 
 function DoctorCard({ doctor, phone }: { doctor: BusinessProduct; phone: string | null }) {
   const specs = doctor.specifications as DoctorSpecs | undefined;
-  const specialties = doctor.categories?.map((category) => category.display_name || category.label).filter(Boolean) ?? [];
+  const specialties = doctor.categories?.map((category) => category.name || category.display_name).filter(Boolean) ?? [];
   const fee = specs?.consultation_fee ?? Number(doctor.price);
   const feeText = Number.isFinite(fee) && fee > 0 ? currencyFormatter.format(fee) : null;
 

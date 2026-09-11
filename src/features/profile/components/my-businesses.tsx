@@ -52,7 +52,7 @@ function OwnedBusinessCard({ business }: { business: OwnedBusiness }) {
         </div>
         <p className="mt-1 truncate text-xs font-semibold text-foreground-muted">{category}</p>
         <span className="mt-1.5 inline-flex w-fit rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-extrabold text-brand">
-          Validity: Life time
+          Launching partner
         </span>
       </div>
     </div>

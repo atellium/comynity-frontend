@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BadgeCheck, Handshake } from "lucide-react";
 import { SaveButton } from "@/features/saved-items";
-import type { BusinessProducts } from "../../business.types";
+import type { BusinessProductCategory, BusinessProducts } from "../../business.types";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -49,7 +49,7 @@ export function BusinessProductsSection({ product, businessSlug }: { product: Bu
           {categories.map((category) => (
             <Link key={category.id} href={`/business/${encodeURIComponent(businessSlug)}/products/${encodeURIComponent(category.slug)}`} className={`flex shrink-0 items-center gap-2 rounded-full border border-border bg-white py-1.5 pr-3.5 text-xs font-bold dark:border-border-dark dark:bg-surface-dark ${category.image ? "pl-1.5" : "pl-3.5"}`}>
               {category.image && <span className="relative size-6 shrink-0 overflow-hidden rounded-full"><Image src={category.image} alt="" fill sizes="24px" className="object-cover" /></span>}
-              {category.display_name || category.label}
+              {productCategoryName(category)}
             </Link>
           ))}
         </div>
@@ -91,4 +91,8 @@ export function BusinessProductsSection({ product, businessSlug }: { product: Bu
       )}
     </section>
   );
+}
+
+function productCategoryName(category: BusinessProductCategory) {
+  return category.name || category.display_name || category.label;
 }

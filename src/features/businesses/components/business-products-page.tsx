@@ -10,6 +10,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { BottomSheetModal } from "@/components/modals";
 import { SiteLoader } from "@/components/loaders";
 import { SaveButton } from "@/features/saved-items";
+import type { BusinessProductCategory } from "../business.types";
 import { getBusinessNameBySlug, getBusinessProducts } from "../business.service";
 import { getDemoBusinessProductsPage } from "../demo-products";
 
@@ -150,12 +151,12 @@ export function BusinessProductsPage({ businessSlug, categorySlug }: { businessS
     <header className="sticky top-0 z-40 bg-white/95 px-page py-2.5 backdrop-blur dark:bg-surface-dark/95">
       <div className="mx-auto flex h-12 max-w-3xl items-center gap-2">
         <button type="button" onClick={() => router.back()} aria-label="Go back" className="flex size-10 items-center justify-center text-brand"><ArrowLeft size={25} /></button>
-        <div className="min-w-0 flex-1"><h1 className="truncate text-lg font-extrabold text-foreground dark:text-foreground-dark">{currentCategory?.display_name ?? labelFromSlug(categorySlug)}</h1>{displayData?.business.name && <p className="truncate text-xs text-foreground-muted dark:text-foreground-dark-muted">{displayData.business.name}</p>}</div>
+        <div className="min-w-0 flex-1"><h1 className="truncate text-lg font-extrabold text-foreground dark:text-foreground-dark">{currentCategory ? productCategoryName(currentCategory) : labelFromSlug(categorySlug)}</h1>{displayData?.business.name && <p className="truncate text-xs text-foreground-muted dark:text-foreground-dark-muted">{displayData.business.name}</p>}</div>
       </div>
     </header>
 
     <main className="mx-auto w-full max-w-3xl bg-white pb-10 dark:bg-surface-dark">
-      {!categorySlug && displayCategories.length > 0 && <nav className="hide-scrollbar flex gap-2 overflow-x-auto bg-white px-page pt-3 dark:bg-surface-dark" aria-label="Product categories">{displayCategories.map((category) => <Link key={category.id} href={categoryHref(category.slug)} onClick={() => setCategoryLoading(true)} className={`flex shrink-0 items-center gap-2 rounded-full border border-border bg-white py-1.5 pr-3.5 text-xs font-bold dark:border-border-dark dark:bg-surface-dark ${category.image ? "pl-1.5" : "pl-3.5"}`}>{category.image && <span className="relative size-6 shrink-0 overflow-hidden rounded-full"><Image src={category.image} alt="" fill sizes="24px" className="object-cover" /></span>}{category.display_name}</Link>)}</nav>}
+      {!categorySlug && displayCategories.length > 0 && <nav className="hide-scrollbar flex gap-2 overflow-x-auto bg-white px-page pt-3 dark:bg-surface-dark" aria-label="Product categories">{displayCategories.map((category) => <Link key={category.id} href={categoryHref(category.slug)} onClick={() => setCategoryLoading(true)} className={`flex shrink-0 items-center gap-2 rounded-full border border-border bg-white py-1.5 pr-3.5 text-xs font-bold dark:border-border-dark dark:bg-surface-dark ${category.image ? "pl-1.5" : "pl-3.5"}`}>{category.image && <span className="relative size-6 shrink-0 overflow-hidden rounded-full"><Image src={category.image} alt="" fill sizes="24px" className="object-cover" /></span>}{productCategoryName(category)}</Link>)}</nav>}
       {SHOW_PRODUCT_FILTERS && <div className="hide-scrollbar flex gap-2 overflow-x-auto border-b border-border-subtle bg-white px-page py-3 dark:border-border-dark-subtle dark:bg-surface-dark" aria-label="Quick product filters">
         <div className={`flex shrink-0 items-center overflow-hidden rounded-full border ${filterCount ? "border-brand bg-brand-50 text-brand dark:bg-brand-950" : "border-border text-foreground-secondary dark:border-border-dark dark:text-foreground-dark-secondary"}`}>
           <button type="button" onClick={openFilters} className="flex items-center gap-1.5 py-1.5 pl-3 pr-2 text-xs font-bold"><SlidersHorizontal size={13} />Filters{filterCount > 0 && <span className="flex size-4 items-center justify-center rounded-full bg-brand text-[9px] text-white">{filterCount}</span>}</button>
@@ -189,6 +190,10 @@ export function BusinessProductsPage({ businessSlug, categorySlug }: { businessS
       </section>
     </BottomSheetModal>}
   </div>;
+}
+
+function productCategoryName(category: BusinessProductCategory) {
+  return category.name || category.display_name || category.label;
 }
 
 function MiniBusinessCard({ business, fallback }: { business: Awaited<ReturnType<typeof getBusinessNameBySlug>> | undefined; fallback: { id: string; name: string; slug: string } }) {

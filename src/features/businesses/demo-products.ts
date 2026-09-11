@@ -63,7 +63,7 @@ export function getDemoProductBySlug(slug: string, business?: BusinessNameDetail
     specifications: { is_bargain: false, is_available: true, is_bestseller: template.bestseller === true },
     custom_fields: template.custom_fields ?? [
       { title: "Availability", value: "In stock" },
-      { title: "Product type", value: category.display_name },
+      { title: "Product type", value: category.name || category.display_name || category.label },
     ],
     categories: [category],
     images: [
