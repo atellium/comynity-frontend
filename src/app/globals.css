@@ -1,0 +1,94 @@
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+@source inline("h-70");
+
+* {
+	box-sizing: border-box;
+}
+
+/* Prevent users from accidentally highlighting text while tapping */
+body {
+	-webkit-touch-callout: none;
+	-webkit-user-select: none;
+	user-select: none;
+	font-family: var(--font-jakarta), sans-serif;
+	color: #111827;
+}
+
+html,
+body {
+	min-height: 100%;
+	background-color: #FFFFFF;
+}
+
+/* Map retained legacy utilities to the semantic palette during migration. */
+.bg-white { background-color: #FFFFFF; }
+.bg-slate-50 { background-color: #F5F8FA; }
+.bg-slate-100 { background-color: #F1F5F9; }
+.text-slate-900 { color: #111827; }
+.text-slate-700 { color: #4B5563; }
+.text-slate-600 { color: #4B5563; }
+.text-slate-500 { color: #7C8797; }
+.text-slate-400 { color: #9CA3AF; }
+.text-slate-300 { color: #B8C0CA; }
+.border-slate-200 { border-color: #DCE5EC; }
+.border-slate-100 { border-color: #E7EDF2; }
+
+.dark .bg-white { background-color: #111922; }
+.dark .bg-slate-50 { background-color: #101820; }
+.dark .bg-slate-100 { background-color: #1D2935; }
+.dark .text-slate-900 { color: #F4F7FA; }
+.dark .text-slate-700,
+.dark .text-slate-600 { color: #C3CBD5; }
+.dark .text-slate-500 { color: #8E99A7; }
+.dark .text-slate-400 { color: #697586; }
+.dark .text-slate-300 { color: #697586; }
+.dark .border-slate-200 { border-color: #26323E; }
+.dark .border-slate-100 { border-color: #1D2832; }
+.dark .bg-blue-50 { background-color: rgba(6, 47, 72, 0.6); }
+.dark .border-blue-100 { border-color: #0B496D; }
+.dark .bg-indigo-50 { background-color: rgba(49, 46, 129, 0.25); }
+.dark .border-indigo-100 { border-color: rgba(99, 102, 241, 0.35); }
+.dark .bg-red-50 { background-color: rgba(185, 28, 28, 0.12); }
+.dark .border-red-200 { border-color: rgba(185, 28, 28, 0.45); }
+.dark .text-red-700 { color: #EF4444; }
+.dark .bg-amber-50 { background-color: rgba(180, 83, 9, 0.14); }
+.dark .border-amber-200 { border-color: rgba(217, 119, 6, 0.4); }
+.dark .text-amber-800 { color: #F59E0B; }
+
+html,
+body {
+	/* overscroll-behavior-y: none; */
+	transition: background-color 200ms cubic-bezier(0.4, 0, 0.2, 1), color 200ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	html,
+	body { transition: none; }
+}
+
+/* Allow text selection only in input fields */
+input,
+textarea {
+	-webkit-user-select: auto;
+	user-select: auto;
+}
+
+/* Hide scrollbar for horizontal carousels but keep functionality */
+.hide-scrollbar::-webkit-scrollbar {
+	display: none;
+}
+
+.hide-scrollbar {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+	display: none;
+}
+
+.scrollbar-hide {
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}

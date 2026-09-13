@@ -1,0 +1,147 @@
+"use client";
+
+import { useEffect, useState, type FormEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
+import MobileHeader from "@/components/layout/MobileHeader";
+import { BottomSheetModal } from "@/components/modals";
+import { createProduct, deleteProduct, getOwnedProduct, searchProductCategories, updateProduct } from "../profile.service";
+import type { CatalogCategory, CatalogPriceType, ProductPayload } from "../catalog.types";
+
+type VariantDraft = { name: string; values: string[] };
+type SpecificationDraft = { label: string; value: string };
+type ProductStatus = ProductPayload["status"];
+
+const inputClass = "h-11 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm font-normal text-foreground outline-none focus:border-brand";
+
+export function CatalogEditorScreen({ businessSlug, catalogSlug }: { businessSlug: string; catalogSlug?: string }) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const editing = Boolean(catalogSlug);
+  const detail = useQuery({ queryKey: ["businesses", "mine", businessSlug, "product", catalogSlug], queryFn: () => getOwnedProduct(businessSlug, catalogSlug!), enabled: editing });
+  const [initialized, setInitialized] = useState(false);
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [priceType, setPriceType] = useState<CatalogPriceType>("fixed");
+  const [price, setPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [mrpPrice, setMrpPrice] = useState("");
+  const [variants, setVariants] = useState<VariantDraft[]>([]);
+  const [specifications, setSpecifications] = useState<SpecificationDraft[]>([]);
+  const [categories, setCategories] = useState<CatalogCategory[]>([]);
+  const [status, setStatus] = useState<ProductStatus>("active");
+  const [isAvailable, setIsAvailable] = useState(true);
+  const [isFeatured, setIsFeatured] = useState(false);
+  const [sortOrder, setSortOrder] = useState("0");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  useEffect(() => {
+    if (!detail.data || initialized) return;
+    const product = detail.data;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setName(product.name);
+      setDescription(product.description ?? "");
+      setPriceType(product.price_type as CatalogPriceType);
+      setPrice(product.price ?? "");
+      setMaxPrice(product.max_price ?? "");
+      setMrpPrice(product.mrp_price ?? "");
+      setVariants(Object.entries(product.variants ?? {}).map(([variantName, values]) => ({ name: variantName, values })));
+      setSpecifications(product.specifications ?? []);
+      setCategories((product.categories ?? []) as CatalogCategory[]);
+      setStatus((product.status as ProductStatus) || "active");
+      setIsAvailable(product.is_available !== false);
+      setIsFeatured(product.is_featured);
+      setSortOrder(String(product.sort_order ?? 0));
+      setInitialized(true);
+    });
+    return () => { cancelled = true; };
+  }, [detail.data, initialized]);
+
+  const save = useMutation({
+    mutationFn: (payload: ProductPayload) => editing ? updateProduct(businessSlug, catalogSlug!, payload) : createProduct(businessSlug, payload),
+    onSuccess: async () => {
+      setIsRedirecting(true);
+      await queryClient.invalidateQueries({ queryKey: ["businesses", businessSlug, "manage-products"] });
+      router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/products`);
+    },
+    onError: () => setIsRedirecting(false),
+  });
+  const remove = useMutation({ mutationFn: () => deleteProduct(businessSlug, catalogSlug!), onSuccess: async () => { setIsRedirecting(true); await queryClient.invalidateQueries({ queryKey: ["businesses", businessSlug, "manage-products"] }); router.replace(`/business/${encodeURIComponent(businessSlug)}/manage/products`); }, onError: () => setIsRedirecting(false) });
+  const isBusy = save.isPending || remove.isPending || isRedirecting;
+
+  function changeSortOrder(delta: number) {
+    const current = Number(sortOrder);
+    const next = Math.max(0, (Number.isFinite(current) ? current : 0) + delta);
+    setSortOrder(String(next));
+  }
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    if (isBusy) return;
+    if (!name.trim()) return setError("Product name is required.");
+    if (categories.length === 0) return setError("Select at least one category.");
+    if (priceType !== "ask" && !price) return setError("Price is required for this price type.");
+    if (priceType === "range" && !maxPrice) return setError("Maximum price is required for a range.");
+    setError(null);
+    const payload: ProductPayload = {
+      name: name.trim(),
+      description: description.trim(),
+      categories: categories.map((item) => item.id),
+      price_type: priceType,
+      price: priceType === "ask" ? "0" : price,
+      mrp_price: mrpPrice || null,
+      max_price: priceType === "range" ? maxPrice : null,
+      variants: Object.fromEntries(variants.filter((item) => item.name.trim() && item.values.some((value) => value.trim())).map((item) => [item.name.trim(), item.values.map((value) => value.trim()).filter(Boolean)])),
+      specifications: specifications.filter((item) => item.label.trim() && item.value.trim()).map((item) => ({ label: item.label.trim(), value: item.value.trim() })),
+      status,
+      is_featured: isFeatured,
+      is_available: isAvailable,
+      sort_order: Number(sortOrder) || 0,
+    };
+    save.mutate(payload, { onError: () => setError(`Unable to ${editing ? "update" : "create"} product.`) });
+  }
+
+  if (editing && detail.isPending) return <div className="min-h-dvh bg-slate-50"><MobileHeader title="Edit Product" /><p className="p-6 text-center text-sm text-foreground-muted">Loading product...</p></div>;
+  if (editing && detail.isError) return <div className="min-h-dvh bg-slate-50"><MobileHeader title="Edit Product" /><p className="p-6 text-center text-sm text-danger">Couldn&apos;t load this product.</p></div>;
+
+  return <div className="min-h-dvh bg-slate-50 pb-10"><MobileHeader title={editing ? "Edit Product" : "Add Product"} /><form onSubmit={submit} className="mx-auto w-full max-w-3xl space-y-4 px-page pt-5">
+    <FormCard title="Product details"><Field label="Name"><input value={name} onChange={(e) => setName(e.target.value)} placeholder="Enter product name" className={inputClass} /></Field><Field label="Description"><textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Describe the product" rows={4} className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-normal outline-none focus:border-brand" /></Field></FormCard>
+    <CategoryPicker selected={categories} onChange={setCategories} />
+    <FormCard title="Pricing"><Field label="Price type"><select value={priceType} onChange={(e) => setPriceType(e.target.value as CatalogPriceType)} className={inputClass}><option value="fixed">Fixed</option><option value="starts_from">Starts from</option><option value="ask">Ask for price</option><option value="range">Range</option></select></Field>{priceType !== "ask" && <><Field label={priceType === "range" ? "Minimum price" : "Price"}><input type="number" min="0" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} placeholder={priceType === "range" ? "Enter minimum price" : "Enter price"} className={inputClass} /></Field>{priceType === "range" && <Field label="Maximum price"><input type="number" min="0" step="0.01" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} placeholder="Enter maximum price" className={inputClass} /></Field>}<Field label="MRP price"><input type="number" min="0" step="0.01" value={mrpPrice} onChange={(e) => setMrpPrice(e.target.value)} placeholder="Enter MRP price" className={inputClass} /></Field></>}</FormCard>
+    <VariantEditor rows={variants} setRows={setVariants} />
+    <DynamicRows title="Specifications" addLabel="Add specification" rows={specifications} setRows={setSpecifications} first="Label" second="Value" />
+    <FormCard title="Settings"><Field label="Status"><select value={status} onChange={(e) => setStatus(e.target.value as ProductStatus)} className={inputClass}><option value="active">Active</option><option value="inactive">Inactive</option><option value="draft">Draft</option></select></Field><Field label="Sort order"><div className="flex h-11 overflow-hidden rounded-xl border border-slate-200 bg-white focus-within:border-brand"><button type="button" onClick={() => changeSortOrder(-1)} disabled={!sortOrder || Number(sortOrder) <= 0} aria-label="Decrease sort order" className="flex w-11 shrink-0 items-center justify-center border-r border-slate-100 text-foreground-muted disabled:text-slate-300"><i className="fa-solid fa-minus" aria-hidden="true" /></button><input type="number" min="0" step="1" inputMode="numeric" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} placeholder="Lower numbers appear first" className="min-w-0 flex-1 px-3 text-center text-sm font-normal text-foreground outline-none" /><button type="button" onClick={() => changeSortOrder(1)} aria-label="Increase sort order" className="flex w-11 shrink-0 items-center justify-center border-l border-slate-100 text-brand"><i className="fa-solid fa-plus" aria-hidden="true" /></button></div></Field><Toggle label="Available" checked={isAvailable} onChange={setIsAvailable} /><Toggle label="Featured" checked={isFeatured} onChange={setIsFeatured} /></FormCard>
+    {error && <p role="alert" className="text-sm font-semibold text-danger">{error}</p>}
+    <button type="submit" disabled={isBusy} className="h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white disabled:opacity-60">{isBusy ? "Saving..." : editing ? "Save changes" : "Add product"}</button>
+    {editing && <button type="button" disabled={isBusy} onClick={() => setDeleteOpen(true)} className="h-12 w-full rounded-xl border border-red-200 bg-white text-sm font-extrabold text-danger disabled:opacity-60">Delete product</button>}
+  </form><BottomSheetModal open={deleteOpen} onClose={() => !isBusy && setDeleteOpen(false)} title="Delete product"><div className="px-page pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-6"><h2 className="text-lg font-extrabold">Delete product?</h2><p className="mt-2 text-sm text-foreground-muted">This product will be permanently deleted. This action cannot be undone.</p><div className="mt-6 grid grid-cols-2 gap-3"><button type="button" disabled={isBusy} onClick={() => setDeleteOpen(false)} className="h-11 rounded-xl border border-slate-200 text-sm font-extrabold disabled:opacity-60">Cancel</button><button type="button" disabled={isBusy} onClick={() => remove.mutate()} className="h-11 rounded-xl bg-danger text-sm font-extrabold text-white disabled:opacity-60">{isBusy ? "Deleting..." : "Delete"}</button></div></div></BottomSheetModal></div>;
+}
+
+function CategoryPicker({ selected, onChange }: { selected: CatalogCategory[]; onChange: (items: CatalogCategory[]) => void }) {
+  const [search, setSearch] = useState("");
+  const [term, setTerm] = useState("");
+  useEffect(() => { const timeout = window.setTimeout(() => setTerm(search.trim()), 300); return () => window.clearTimeout(timeout); }, [search]);
+  const query = useQuery({ queryKey: ["product-categories", term], queryFn: () => searchProductCategories(term), enabled: term.length > 0 });
+  return <FormCard title="Categories"><div className="flex flex-wrap gap-2">{selected.map((item) => <button key={item.id} type="button" onClick={() => onChange(selected.filter((category) => category.id !== item.id))} className="rounded-full bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand">{catalogCategoryName(item)} <i className="fa-solid fa-xmark ml-1" /></button>)}</div><div className="relative"><input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search categories" className={`${inputClass} pr-11`} />{search && <button type="button" onClick={() => setSearch("")} aria-label="Clear category search" className="absolute right-1 top-1 flex size-9 items-center justify-center text-foreground-muted"><i className="fa-solid fa-xmark" /></button>}</div>{term && <div className="max-h-48 overflow-y-auto rounded-xl border border-slate-100">{query.isFetching && <p className="p-3 text-xs text-foreground-muted">Searching...</p>}{query.data?.map((item) => { const chosen = selected.some((category) => category.id === item.id); return <label key={item.id} className={`flex cursor-pointer items-center gap-3 border-b border-slate-100 p-3 text-sm font-semibold last:border-0 ${chosen ? "bg-slate-50" : "hover:bg-slate-50"}`}><input type="checkbox" checked={chosen} onChange={() => onChange(chosen ? selected.filter((category) => category.id !== item.id) : [...selected, item])} className="size-4 shrink-0 accent-brand" /><span>{catalogCategoryName(item)}</span></label>; })}{query.data?.length === 0 && <p className="p-3 text-xs text-foreground-muted">No categories found.</p>}</div>}</FormCard>;
+}
+
+function catalogCategoryName(category: CatalogCategory) { return category.name || category.display_name || category.label; }
+
+function VariantEditor({ rows, setRows }: { rows: VariantDraft[]; setRows: (rows: VariantDraft[]) => void }) {
+  const canAddVariant = rows.every((row) => row.name.trim() && row.values.length > 0 && row.values.every((value) => value.trim()));
+  return <FormCard title="Variants">{rows.map((row, rowIndex) => <div key={rowIndex} className="rounded-xl border border-slate-100 p-3"><div className="flex gap-2"><input aria-label="Variant name" placeholder="Variant name, e.g. Color" value={row.name} onChange={(e) => setRows(rows.map((item, index) => index === rowIndex ? { ...item, name: e.target.value } : item))} className={inputClass} /><button type="button" aria-label="Remove variant" onClick={() => setRows(rows.filter((_, index) => index !== rowIndex))} className="size-11 shrink-0 rounded-xl bg-red-50 text-danger"><i className="fa-solid fa-trash" /></button></div><div className="mt-3 space-y-2">{row.values.map((value, valueIndex) => <div key={valueIndex} className="flex gap-2"><input aria-label="Variant value" placeholder="Value" value={value} onChange={(e) => setRows(rows.map((item, index) => index === rowIndex ? { ...item, values: item.values.map((current, i) => i === valueIndex ? e.target.value : current) } : item))} className={inputClass} /><button type="button" aria-label="Remove variant value" onClick={() => setRows(rows.map((item, index) => index === rowIndex ? { ...item, values: item.values.filter((_, i) => i !== valueIndex) } : item))} className="size-11 shrink-0 rounded-xl bg-slate-50 text-foreground-muted"><i className="fa-solid fa-xmark" /></button></div>)}<button type="button" disabled={row.values.some((value) => !value.trim())} onClick={() => setRows(rows.map((item, index) => index === rowIndex ? { ...item, values: [...item.values, ""] } : item))} className="text-xs font-extrabold text-brand disabled:opacity-40"><i className="fa-solid fa-plus mr-1" />Add value</button></div></div>)}<button type="button" disabled={!canAddVariant} onClick={() => setRows([...rows, { name: "", values: [""] }])} className="text-xs font-extrabold text-brand disabled:opacity-40"><i className="fa-solid fa-plus mr-1" />Add variant</button></FormCard>;
+}
+
+function DynamicRows<T extends { [key: string]: string }>({ title, addLabel, rows, setRows, first, second }: { title: string; addLabel: string; rows: T[]; setRows: (rows: T[]) => void; first: string; second: string }) {
+  const keys = ["label", "value"] as Array<keyof T>;
+  const canAdd = rows.every((row) => String(row[keys[0]]).trim() && String(row[keys[1]]).trim());
+  return <FormCard title={title}>{rows.map((row, index) => <div key={index} className="mb-3 grid grid-cols-[1fr_1fr_auto] gap-2"><input aria-label={first} placeholder={first} value={row[keys[0]]} onChange={(e) => setRows(rows.map((item, i) => i === index ? { ...item, [keys[0]]: e.target.value } : item))} className={inputClass} /><input aria-label={second} placeholder={second} value={row[keys[1]]} onChange={(e) => setRows(rows.map((item, i) => i === index ? { ...item, [keys[1]]: e.target.value } : item))} className={inputClass} /><button type="button" aria-label={`Remove ${title.toLowerCase()} row`} onClick={() => setRows(rows.filter((_, i) => i !== index))} className="size-11 rounded-xl bg-red-50 text-danger"><i className="fa-solid fa-trash" /></button></div>)}<button type="button" disabled={!canAdd} onClick={() => setRows([...rows, Object.fromEntries(keys.map((key) => [key, ""])) as T])} className="text-xs font-extrabold text-brand disabled:opacity-40"><i className="fa-solid fa-plus mr-1" />{addLabel}</button></FormCard>;
+}
+
+function FormCard({ title, children }: { title: string; children: React.ReactNode }) { return <section className="rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_2px_8px_rgba(15,23,42,0.04)]"><h2 className="mb-4 text-sm font-extrabold text-foreground">{title}</h2><div className="space-y-4">{children}</div></section>; }
+function Field({ label, children }: { label: string; children: React.ReactNode }) { return <label className="block text-xs font-bold text-foreground"><span className="mb-1.5 block">{label}</span>{children}</label>; }
+function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (checked: boolean) => void }) { return <label className="flex items-center justify-between gap-3 text-sm font-bold"><span>{label}</span><span className={`relative h-7 w-12 rounded-full transition ${checked ? "bg-brand" : "bg-slate-200"}`}><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="peer sr-only" /><span className={`absolute top-1 size-5 rounded-full bg-white shadow-sm transition-all ${checked ? "left-6" : "left-1"}`} /></span></label>; }
