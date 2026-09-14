@@ -180,10 +180,14 @@ export type ProductDetail = Omit<BusinessProduct, "primary_image" | "variants" |
   business: {
     id: string;
     name: string;
-    handle: string;
+    handle?: string;
     slug: string;
     thumbnail: string | null;
     cover_image?: string | null;
+    media?: {
+      thumbnail?: string | null;
+      cover_image?: string | null;
+    };
     locality: string;
     city: { id: number; name: string; state: string };
   };

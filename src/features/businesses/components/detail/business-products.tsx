@@ -78,9 +78,9 @@ export function BusinessProductsSection({ product, businessSlug }: { product: Bu
                     />
                     {item.is_featured && <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[10px] font-extrabold text-brand shadow-sm"><BadgeCheck size={11} aria-hidden="true" />Featured</span>}
                   </div>
-                  <h3 className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-foreground dark:text-foreground-dark">{item.name}</h3>
+                  <h3 className="mt-2 line-clamp-2 text-base font-semibold leading-5 text-foreground dark:text-foreground-dark">{item.name}</h3>
                   {variantRows(item).length > 0 && <div className="mt-1 space-y-0.5">{variantRows(item).map((variant) => <p key={variant.name} className="truncate text-[11px] text-foreground-muted dark:text-foreground-dark-muted"><span className="font-bold">{variant.name}:</span> {variant.values.join(", ")}</p>)}</div>}
-                  <p className="mt-1 text-sm font-extrabold text-foreground dark:text-foreground-dark">
+                  <p className="mt-1 text-xs font-extrabold text-foreground dark:text-foreground-dark">
                     {formatPrice(item.price, item.price_type, item.max_price)}
                   </p>
                 </Link>

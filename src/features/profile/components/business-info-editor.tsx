@@ -119,6 +119,14 @@ function BusinessHoursEditor({ value, onChange }: { value: HoursByDay; onChange:
       : slots));
   }
 
+  function copyPreviousDay(dayIndex: number) {
+    if (dayIndex === 0) return;
+    const previousSlots = value[dayIndex - 1] ?? [];
+    onChange(value.map((slots, currentDayIndex) => currentDayIndex === dayIndex
+      ? previousSlots.map((slot) => ({ ...slot }))
+      : slots));
+  }
+
   function removeSlot(dayIndex: number, slotIndex: number) {
     onChange(value.map((slots, currentDayIndex) => currentDayIndex === dayIndex
       ? slots.filter((_, currentSlotIndex) => currentSlotIndex !== slotIndex)
@@ -133,10 +141,18 @@ function BusinessHoursEditor({ value, onChange }: { value: HoursByDay; onChange:
           <section key={day.key} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
             <div className="flex items-center justify-between gap-3">
               <h3 className="text-xs font-extrabold">{day.label}</h3>
-              <button type="button" onClick={() => addSlot(dayIndex)} className="text-[11px] font-extrabold text-brand">
-                <i className="fa-solid fa-plus mr-1" aria-hidden="true" />
-                Add hours
-              </button>
+              <div className="flex shrink-0 items-center gap-3">
+                {dayIndex > 0 && (
+                  <button type="button" onClick={() => copyPreviousDay(dayIndex)} className="text-[11px] font-extrabold text-brand">
+                    <i className="fa-solid fa-copy mr-1" aria-hidden="true" />
+                    Copy above
+                  </button>
+                )}
+                <button type="button" onClick={() => addSlot(dayIndex)} className="text-[11px] font-extrabold text-brand">
+                  <i className="fa-solid fa-plus mr-1" aria-hidden="true" />
+                  Add hours
+                </button>
+              </div>
             </div>
             {slots.length === 0 ? (
               <p className="mt-2 text-xs font-medium text-foreground-muted">Closed</p>

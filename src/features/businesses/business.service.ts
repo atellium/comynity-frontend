@@ -72,6 +72,7 @@ export async function getProductById(id: string) {
 }
 
 function normalizeProductDetail(product: NonNullable<ProductDetailApiResponse["result"]>): ProductDetail {
+  const business = product.business;
   return {
     ...product,
     type: product.type ?? "product",
@@ -86,12 +87,18 @@ function normalizeProductDetail(product: NonNullable<ProductDetailApiResponse["r
     specifications: normalizeProductSpecifications(product.specifications),
     custom_fields: product.custom_fields ?? normalizeSpecificationFields(product.specifications),
     categories: product.categories ?? [],
-    business: product.business ?? {
+    business: business ? {
+      ...business,
+      handle: business.handle ?? business.slug,
+      thumbnail: business.thumbnail ?? business.media?.thumbnail ?? null,
+      cover_image: business.cover_image ?? business.media?.cover_image ?? null,
+    } : {
       id: "",
       name: "",
       handle: "",
       slug: "",
       thumbnail: null,
+      cover_image: null,
       locality: "",
       city: { id: 0, name: "", state: "" },
     },
