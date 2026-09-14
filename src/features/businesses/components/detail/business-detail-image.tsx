@@ -53,7 +53,7 @@ export function BusinessDetailImage({ thumbnail, businessName, businessId }: { t
     }
   }
 
-  return <><div className="relative aspect-video w-full bg-slate-50">
+  return <><div className="relative h-[calc(56.25vw+100px)] max-h-[532px] w-full bg-slate-50">
     <Image src={thumbnail || "/images/default.jpg"} alt={businessName} fill priority sizes="(max-width: 768px) 100vw, 768px" className="object-cover" />
     <button
       type="button"
