@@ -10,6 +10,7 @@ import { getBusinessUploads, getOwnedProduct, updateProductImages, uploadBusines
 import type { BusinessUpload } from "../profile.types";
 
 const maximumImages = 20;
+const maximumImagesPerUpload = 5;
 type DraftImage = { id: string; file: File; previewUrl: string };
 
 function createDraftId() {
@@ -114,14 +115,15 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
       setError(`The product image limit is ${maximumImages}. Remove an image before adding more.`);
       return;
     }
-    if (files.length > available) setError(`Only the first ${available} selected image${available === 1 ? " was" : "s were"} added.`);
+    const allowed = Math.min(available, maximumImagesPerUpload);
+    if (files.length > allowed) setError(`Only the first ${allowed} selected image${allowed === 1 ? " was" : "s were"} added. You can upload up to ${maximumImagesPerUpload} images at a time.`);
     setSuccess(null);
-    void prepareDraftImages(files.slice(0, available));
+    void prepareDraftImages(files.slice(0, allowed));
   }
 
   async function prepareDraftImages(files: File[]) {
     try {
-      const compressed = await Promise.all(files.map((file) => compressImage(file, { maxWidth: 1600, quality: 0.95 })));
+      const compressed = await Promise.all(files.map((file) => compressImage(file, { maxWidth: 1024, quality: 0.9 })));
       setDraftImages((current) => [...current, ...compressed.map((file) => {
         const previewUrl = URL.createObjectURL(file);
         draftPreviewUrls.current.add(previewUrl);
