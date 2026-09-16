@@ -34,7 +34,7 @@ export async function getPopularCategories(signal?: AbortSignal) {
 export async function getBusinessCategoriesByParent(parent: string, signal?: AbortSignal) {
 	const { data } = await publicApiClient.get<PopularCategoriesResponse>(
 		"/api/categories/business/",
-		{ params: { parent }, signal },
+		{ params: { parent_slug: parent, is_featured: true }, signal },
 	);
 
 	return data.results;
