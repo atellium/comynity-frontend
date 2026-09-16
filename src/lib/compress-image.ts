@@ -8,7 +8,7 @@ export type ImageCompressionOptions = {
 /** Resizes an image in the browser and encodes the upload as WebP. */
 export async function compressImage(
   file: File,
-  { maxWidth = 1024, quality = 0.95 }: ImageCompressionOptions,
+  { maxWidth = 992, quality = 0.87 }: ImageCompressionOptions,
 ): Promise<File> {
   if (!ALLOWED_IMAGE_TYPES.has(file.type)) {
     throw new Error("Please select a JPEG, PNG, or WebP image.");

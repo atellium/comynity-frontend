@@ -18,14 +18,15 @@ type DashboardLinkConfig = {
 
 const SECTION_LINKS: Record<BusinessSection, DashboardLinkConfig> = {
   product: { title: "Products", description: "View and manage your product catalogue.", icon: "fa-box", path: "products" },
+  doctor: { title: "Doctors", description: "View and manage doctor profiles.", icon: "fa-user-doctor", path: "doctors" },
   offer: { title: "Offers", description: "Create and manage your business offers.", icon: "fa-tags", path: "offers" },
   property: { title: "Properties", description: "View and manage property listings.", icon: "fa-building-circle-check", path: "properties" },
   course: { title: "Courses", description: "View and manage course listings.", icon: "fa-graduation-cap", path: "courses" },
-  doctor: { title: "Doctors", description: "View and manage doctor profiles.", icon: "fa-user-doctor", path: "doctors" },
   pricing: { title: "Pricing", description: "View and manage pricing details.", icon: "fa-indian-rupee-sign", path: "pricing" },
   menu: { title: "Menu", description: "View and manage menu items.", icon: "fa-utensils", path: "menu" },
   package: { title: "Packages", description: "View and manage packages.", icon: "fa-boxes-stacked", path: "packages" },
 };
+const SECTION_ORDER = Object.keys(SECTION_LINKS) as BusinessSection[];
 
 export function BusinessDashboardScreen({ slug }: { slug: string }) {
   const [qrOpen, setQrOpen] = useState(false);
@@ -33,7 +34,7 @@ export function BusinessDashboardScreen({ slug }: { slug: string }) {
   const [downloading, setDownloading] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
   const { data } = useQuery({ queryKey: ["businesses", "mine", slug], queryFn: () => getOwnedBusinessInfo(slug) });
-  const enabledSections = (data?.sections ?? []).filter((section): section is BusinessSection => section in SECTION_LINKS);
+  const enabledSections = SECTION_ORDER.filter((section) => data?.sections?.includes(section));
 
   function openQrCode() {
     setQrUrl(new URL(`/${encodeURIComponent(slug)}`, window.location.origin).href);

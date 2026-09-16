@@ -1,6 +1,6 @@
-import type { BusinessListItem, BusinessProduct } from "@/features/businesses/business.types";
+import type { BusinessListItem, BusinessProduct, DoctorListItem } from "@/features/businesses/business.types";
 
-export type SavedItemType = "business" | "product" | (string & {});
+export type SavedItemType = "business" | "product" | "doctor" | (string & {});
 
 export type SavedBusiness = Omit<BusinessListItem, "display_as_store" | "location"> & {
   display_as_store?: boolean;
@@ -15,7 +15,9 @@ export type SavedProduct = Omit<BusinessProduct, "short_description"> & {
   short_description?: string;
 };
 
-export type SavedItemPayload = SavedBusiness | SavedProduct | (Record<string, unknown> & { id?: string; name?: string; slug?: string });
+export type SavedDoctor = DoctorListItem;
+
+export type SavedItemPayload = SavedBusiness | SavedProduct | SavedDoctor | (Record<string, unknown> & { id?: string; name?: string; slug?: string });
 
 export type SavedItem = {
   id: string;

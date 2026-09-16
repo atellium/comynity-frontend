@@ -1,7 +1,7 @@
 import { protectedApiClient } from "@/lib/api";
 import axios, { type AxiosResponse } from "axios";
 import type { BusinessCategoryOption, BusinessCityOption, BusinessGalleryImage, BusinessGalleryResponse, BusinessGalleryUpload, BusinessGalleryUploadTicket, BusinessHoursUpdatePayload, BusinessUpdatePayload, BusinessUploadsResponse, BusinessUploadTicketsResponse, OwnedBusinessInfoResponse, OwnedBusinessesResponse } from "./profile.types";
-import type { CatalogCategorySearchResponse, CatalogDetailResponse, CatalogGalleryImage, CatalogGalleryResponse, CatalogImageUpload, CatalogImageUploadTicket, CatalogPayload, OwnedProductResponse, OwnedProductsResponse, ProductCategorySearchResponse, ProductPayload } from "./catalog.types";
+import type { CatalogCategorySearchResponse, CatalogDetailResponse, CatalogGalleryImage, CatalogGalleryResponse, CatalogImageUpload, CatalogImageUploadTicket, CatalogPayload, DoctorPayload, DoctorSpecialtySearchResponse, ManagedDoctor, ManagedDoctorsResponse, OwnedProductResponse, OwnedProductsResponse, ProductCategorySearchResponse, ProductPayload } from "./catalog.types";
 import type { BusinessOfferResponse, BusinessOffersResponse } from "./offer.types";
 
 function normalizeOwnedBusinessInfo(business: NonNullable<OwnedBusinessInfoResponse["result"]>) {
@@ -42,6 +42,56 @@ export async function searchProductCategories(search: string) {
     ...category,
     display_name: category.display_name || category.label || category.name,
   }));
+}
+
+export async function searchDoctorSpecialties(search: string) {
+  const { data } = await protectedApiClient.get<DoctorSpecialtySearchResponse>("/api/doctors/specialties/", { params: { search } });
+  return (data.results ?? []).map((specialty) => ({
+    ...specialty,
+    display_name: specialty.label || specialty.name,
+  }));
+}
+
+function ownedDoctorsUrl(businessId: string) {
+  return `/api/businesses/my/${encodeURIComponent(businessId)}/doctors/`;
+}
+
+function ownedDoctorUrl(businessId: string, doctorId: string) {
+  return `${ownedDoctorsUrl(businessId)}${encodeURIComponent(doctorId)}/`;
+}
+
+export async function createDoctor(businessId: string, payload: DoctorPayload) {
+  const { data } = await protectedApiClient.post<ManagedDoctor>(ownedDoctorsUrl(businessId), payload);
+  return data;
+}
+
+export async function updateDoctor(businessId: string, doctorId: string, payload: DoctorPayload) {
+  const { data } = await protectedApiClient.patch<ManagedDoctor>(ownedDoctorUrl(businessId, doctorId), payload);
+  return data;
+}
+
+export async function deleteDoctor(businessId: string, doctorId: string) {
+  await protectedApiClient.delete(ownedDoctorUrl(businessId, doctorId));
+}
+
+export async function getManagedDoctors(businessSlug: string, page = 1) {
+  const { data } = await protectedApiClient.get<ManagedDoctorsResponse>(`/api/businesses/${encodeURIComponent(businessSlug)}/doctors/`, { params: { page } });
+  return {
+    ...data,
+    results: data.results ?? [],
+  };
+}
+
+export async function getManagedDoctor(businessSlug: string, doctorIdOrSlug: string) {
+  let page = 1;
+  for (let attempt = 0; attempt < 50; attempt += 1) {
+    const response = await getManagedDoctors(businessSlug, page);
+    const doctor = response.results.find((item) => item.id === doctorIdOrSlug || item.slug === doctorIdOrSlug);
+    if (doctor) return doctor;
+    if (!response.pagination?.has_next) break;
+    page += 1;
+  }
+  throw new Error("Doctor not found.");
 }
 
 function ownedProductsUrl(businessSlug: string) {

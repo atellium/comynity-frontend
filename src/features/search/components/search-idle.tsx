@@ -1,28 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
-import {
-  fetchCategories,
-  getCategoryDisplayName,
-} from "@/features/categories";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { clearRecentCategories } from "../search.slice";
-import { useCategoryNavigation } from "../use-category-navigation";
+import { useSearchItemNavigation } from "../use-category-navigation";
 
 export function SearchIdle({ showRecent = true }: { showRecent?: boolean }) {
   const dispatch = useAppDispatch();
   const recentCategories = useAppSelector(
     (state) => state.search.recentCategories,
-  );
-  const items = useAppSelector((state) => state.categories.items);
-  const categoriesRehydrated = useAppSelector(
-    (state) => state.categories._persist?.rehydrated ?? false,
-  );
-  const openCategory = useCategoryNavigation();
-
-  useEffect(() => {
-    if (categoriesRehydrated && items.length === 0) dispatch(fetchCategories());
-  }, [categoriesRehydrated, dispatch, items.length]);
+  ).filter((item) => item.type === "business" || item.type === "doctor" || item.type === "product");
+  const openSearchItem = useSearchItemNavigation();
 
   return (
     <div className="animate-in space-y-5 py-1 fade-in">
@@ -47,17 +34,19 @@ export function SearchIdle({ showRecent = true }: { showRecent?: boolean }) {
             <div className="flex w-max min-w-full gap-2">
               {recentCategories.map((category) => (
                 <button
-                  key={category.slug}
+                  key={`${category.type}-${category.slug}`}
                   type="button"
-                  onClick={() => openCategory(category)}
+                  onClick={() => openSearchItem(category)}
                   className="flex h-10 max-w-56 shrink-0 items-center gap-2 rounded-full border border-border-subtle bg-white px-3.5 text-left text-[12px] text-foreground transition-colors hover:bg-surface-tertiary  dark:border-border-dark-subtle dark:bg-surface-dark-secondary dark:text-foreground-dark dark:hover:bg-surface-dark-tertiary"
                 >
                   <i
                     className="fa-solid fa-clock-rotate-left shrink-0 text-[11px] text-foreground-muted dark:text-foreground-dark-muted"
                     aria-hidden="true"
                   />
-                  <span className="truncate font-semibold">
-                    {getCategoryDisplayName(category)}
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold">
+                      {category.display_name || category.label || category.name}
+                    </span>
                   </span>
                 </button>
               ))}

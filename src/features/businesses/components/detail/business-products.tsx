@@ -6,7 +6,7 @@ import { BadgeCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { SaveButton } from "@/features/saved-items";
 import { getBusinessProducts } from "../../business.service";
-import type { BusinessProduct, BusinessProductCategory, BusinessProducts } from "../../business.types";
+import type { BusinessProduct, BusinessProductCategory, BusinessProducts, ProductListImage } from "../../business.types";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -31,6 +31,7 @@ export function BusinessProductsSection({ product, businessSlug }: { product: Bu
   const query = useQuery({ queryKey: ["business", businessSlug, "products", "preview"], queryFn: () => getBusinessProducts(businessSlug, { pageSize: 10 }) });
   const categories = query.data?.categories ?? product?.categories ?? [];
   const items = (query.data?.results ?? product?.items ?? []).slice(0, 10);
+  const showAllProductsLink = items.length >= 10;
 
   if (query.isPending && !product) return null;
   if (!categories.length && !items.length) return null;
@@ -41,13 +42,15 @@ export function BusinessProductsSection({ product, businessSlug }: { product: Bu
         <h2 id="business-products-heading" className="text-base font-extrabold tracking-tight text-foreground dark:text-foreground-dark">
           Products
         </h2>
-        <Link
-          href={`/business/${encodeURIComponent(businessSlug)}/products`}
-          className="shrink-0 text-xs font-extrabold text-brand hover:text-brand-800 dark:text-brand-300"
-        >
-          Explore all products
-          <i className="fa-solid fa-chevron-right ml-1 text-[9px]" aria-hidden="true" />
-        </Link>
+        {showAllProductsLink && (
+          <Link
+            href={`/business/${encodeURIComponent(businessSlug)}/products`}
+            className="shrink-0 text-xs font-extrabold text-brand hover:text-brand-800 dark:text-brand-300"
+          >
+            Explore all products
+            <i className="fa-solid fa-chevron-right ml-1 text-[9px]" aria-hidden="true" />
+          </Link>
+        )}
       </div>
 
       {categories.length > 0 && (
@@ -78,7 +81,7 @@ export function BusinessProductsSection({ product, businessSlug }: { product: Bu
                     />
                     {item.is_featured && <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[10px] font-extrabold text-brand shadow-sm"><BadgeCheck size={11} aria-hidden="true" />Featured</span>}
                   </div>
-                  <h3 className="mt-2 line-clamp-2 text-base font-semibold leading-5 text-foreground dark:text-foreground-dark">{item.name}</h3>
+                  <h3 className="mt-2 line-clamp-2 text-base font-normal leading-5 text-foreground dark:text-foreground-dark">{item.name}</h3>
                   {variantRows(item).length > 0 && <div className="mt-1 space-y-0.5">{variantRows(item).map((variant) => <p key={variant.name} className="truncate text-[11px] text-foreground-muted dark:text-foreground-dark-muted"><span className="font-bold">{variant.name}:</span> {variant.values.join(", ")}</p>)}</div>}
                   <p className="mt-1 text-xs font-extrabold text-foreground dark:text-foreground-dark">
                     {formatPrice(item.price, item.price_type, item.max_price)}
@@ -88,10 +91,12 @@ export function BusinessProductsSection({ product, businessSlug }: { product: Bu
             ))}
           </div>
 
-          <Link href={`/business/${encodeURIComponent(businessSlug)}/products`} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-brand-800 active:bg-brand-900">
-            View all products
-            <i className="fa-solid fa-arrow-right text-xs" aria-hidden="true" />
-          </Link>
+          {showAllProductsLink && (
+            <Link href={`/business/${encodeURIComponent(businessSlug)}/products`} className="mt-5 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-brand text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-brand-800 active:bg-brand-900">
+              View all products
+              <i className="fa-solid fa-arrow-right text-xs" aria-hidden="true" />
+            </Link>
+          )}
         </>
       )}
     </section>
@@ -99,11 +104,16 @@ export function BusinessProductsSection({ product, businessSlug }: { product: Bu
 }
 
 function productCategoryName(category: BusinessProductCategory) {
-  return category.name || category.display_name || category.label;
+  return category.label || category.display_name || category.name;
 }
 
 function productImage(product: BusinessProduct) {
-  return product.images?.[0] || product.primary_image || "/images/default.jpg";
+  return imageUrl(product.images?.[0]) || product.primary_image || "/images/default.jpg";
+}
+
+function imageUrl(image: ProductListImage | undefined) {
+  if (!image) return null;
+  return typeof image === "string" ? image : image.upload.url;
 }
 
 function variantRows(product: BusinessProduct) {

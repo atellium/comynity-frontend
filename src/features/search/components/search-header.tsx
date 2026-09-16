@@ -25,8 +25,8 @@ export function SearchHeader({
         </button>
         <input
           type="search"
-          aria-label="Search categories"
-          placeholder="Search categories"
+          aria-label="Search doctors and businesses"
+          placeholder="Search doctors and businesses"
           className="h-full min-w-0 flex-1 appearance-none bg-transparent font-medium text-[17px] text-foreground outline-none placeholder:text-foreground-muted dark:text-foreground-dark dark:placeholder:text-foreground-dark-muted [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-decoration]:hidden"
           value={query}
           onChange={(event) => onQueryChange(event.target.value)}
