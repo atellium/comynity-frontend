@@ -5,4 +5,5 @@ export { ProductDetailPage } from "./product-detail-page";
 export { ProductListPage } from "./product-list-page";
 export { NearbyOffersPage } from "./nearby-offers-page";
 export { DoctorListPage } from "./doctor-list-page";
+export { DoctorSpecialtiesPage } from "./doctor-specialties-page";
 export { DoctorDetailPage } from "./doctor-detail-page";

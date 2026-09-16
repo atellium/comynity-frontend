@@ -7,6 +7,7 @@ import type {
   BusinessProductsListParams,
   BusinessProductsListResponse,
   BusinessDoctorsResponse,
+  DoctorSpecialtiesResponse,
   DoctorListItem,
   DoctorListResponse,
   NearbyOffersResponse,
@@ -21,6 +22,11 @@ export async function getNearbyOffers({ lat, lng, page = 1 }: { lat: number; lng
 
 export async function getDoctors({ lat, lng, specialty, page = 1 }: { lat: number; lng: number; specialty: string; page?: number }) {
   const { data } = await publicApiClient.get<DoctorListResponse>("/api/doctors/", { params: { lat, lng, specialty, page } });
+  return { ...data, results: data.results ?? [] };
+}
+
+export async function getFeaturedDoctorSpecialties() {
+  const { data } = await publicApiClient.get<DoctorSpecialtiesResponse>("/api/doctors/specialties/", { params: { is_featured: true } });
   return { ...data, results: data.results ?? [] };
 }
 
