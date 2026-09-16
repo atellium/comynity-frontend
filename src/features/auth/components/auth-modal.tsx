@@ -253,6 +253,12 @@ export function AuthModal({ open, onClose, onComplete }: AuthModalProps) {
 		autoSubmittedOtp.current = "";
 	};
 
+	const handleChangePhone = () => {
+		otpForm.reset();
+		autoSubmittedOtp.current = "";
+		dispatch(resetAuthentication());
+	};
+
 	const handleClose = () => {
 		if (requiresProfile) {
 			clearAuthTokens();
@@ -322,7 +328,7 @@ export function AuthModal({ open, onClose, onComplete }: AuthModalProps) {
 										autoComplete="tel-national"
 										autoFocus
 										maxLength={10}
-										placeholder="98765 43210"
+										placeholder="Enter Mobile Number"
 										className="min-w-0 flex-1 bg-transparent px-3 text-[16px] font-extrabold tracking-wide text-slate-900 outline-none placeholder:font-medium placeholder:text-slate-300"
 									/>
 								</div>
@@ -379,9 +385,23 @@ export function AuthModal({ open, onClose, onComplete }: AuthModalProps) {
 								</h2>
 								<p className="mt-2 text-[14px] font-medium leading-relaxed text-slate-500 pr-4">
 									Enter the 4-digit secure code we sent to <br />
-									<strong className="font-bold text-slate-900">
-										+91 {submittedPhone}
-									</strong>
+									<span className="inline-flex items-center gap-2">
+										<strong className="font-bold text-slate-900">
+											+91 {submittedPhone}
+										</strong>
+										<button
+											type="button"
+											onClick={handleChangePhone}
+											disabled={verifyOtpStatus === "loading"}
+											className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-extrabold text-brand transition-colors hover:bg-brand-100 disabled:cursor-wait disabled:opacity-60"
+										>
+											<i
+												className="fa-solid fa-pen-to-square text-[10px]"
+												aria-hidden="true"
+											/>
+											Change
+										</button>
+									</span>
 								</p>
 							</div>
 

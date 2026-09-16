@@ -6,13 +6,27 @@ import type {
   ProductDetailApiResponse,
   BusinessProductsListParams,
   BusinessProductsListResponse,
+  BusinessDoctorsResponse,
+  DoctorListItem,
+  DoctorListResponse,
   NearbyOffersResponse,
+  ProductsListResponse,
   ProductVariant,
 } from "./business.types";
 
 export async function getNearbyOffers({ lat, lng, page = 1 }: { lat: number; lng: number; page?: number }) {
   const { data } = await publicApiClient.get<NearbyOffersResponse>("/api/offers/nearby/", { params: { lat, lng, page } });
   return { ...data, results: data.results ?? [] };
+}
+
+export async function getDoctors({ lat, lng, specialty, page = 1 }: { lat: number; lng: number; specialty: string; page?: number }) {
+  const { data } = await publicApiClient.get<DoctorListResponse>("/api/doctors/", { params: { lat, lng, specialty, page } });
+  return { ...data, results: data.results ?? [] };
+}
+
+export async function getDoctorBySlug(slug: string) {
+  const { data } = await publicApiClient.get<DoctorListItem>(`/api/doctors/${encodeURIComponent(slug)}`);
+  return data;
 }
 
 export async function getBusinesses({
@@ -178,6 +192,8 @@ export async function getBusinessProducts(
 }
 
 export async function getProducts({
+  lat,
+  lng,
   category,
   minPrice,
   maxPrice,
@@ -186,12 +202,16 @@ export async function getProducts({
   sortOrder,
   page = 1,
   pageSize = 20,
-}: BusinessProductsListParams = {}) {
-  const { data } = await publicApiClient.get<BusinessProductsListResponse>(
+  radiusKm = 5,
+}: BusinessProductsListParams & { lat?: number; lng?: number; radiusKm?: number } = {}) {
+  const { data } = await publicApiClient.get<ProductsListResponse>(
     "/api/products/",
     {
       params: {
+        lat,
+        lng,
         category,
+        radius: radiusKm,
         min_price: minPrice,
         max_price: maxPrice,
         is_featured: isFeatured || undefined,
@@ -205,20 +225,18 @@ export async function getProducts({
 
   return {
     ...data,
-    categories: data.categories ?? [],
     results: data.results ?? [],
   };
 }
 
 export async function getBusinessDoctors(businessSlug: string, page = 1) {
-  const { data } = await publicApiClient.get<BusinessProductsListResponse>(
-    `/api/businesses/${encodeURIComponent(businessSlug)}/catalogs/`,
-    { params: { type: "doctor", page } },
+  const { data } = await publicApiClient.get<BusinessDoctorsResponse>(
+    `/api/businesses/${encodeURIComponent(businessSlug)}/doctors/`,
+    { params: { page } },
   );
 
   return {
     ...data,
-    categories: data.categories ?? [],
     results: data.results ?? [],
   };
 }

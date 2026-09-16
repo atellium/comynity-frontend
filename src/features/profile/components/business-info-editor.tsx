@@ -78,7 +78,13 @@ export function BusinessInfoEditor({ section, business, onClose, onSaved }: { se
     }
     let payload: BusinessUpdatePayload | FormData;
     if (section === "basic") {
-      payload = { name: values.name, description: values.description, established_year: Number(values.established_year) };
+      const description = values.description.trim();
+      const establishedYear = values.established_year.trim();
+      payload = {
+        name: values.name,
+        description: description || null,
+        established_year: establishedYear ? Number(establishedYear) : null,
+      };
     }
     else if (section === "offerings") {
       const offeringNames = offerings.map((item) => item.name.trim());

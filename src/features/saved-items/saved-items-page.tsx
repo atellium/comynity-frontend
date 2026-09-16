@@ -7,7 +7,7 @@ import Link from "next/link";
 import MobileHeader from "@/components/layout/MobileHeader";
 import { getSavedItems } from "./saved-items.service";
 import { SaveButton } from "./save-button";
-import type { SavedBusiness, SavedItem, SavedProduct } from "./saved-items.types";
+import type { SavedBusiness, SavedDoctor, SavedItem, SavedProduct } from "./saved-items.types";
 
 const money = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
@@ -20,14 +20,14 @@ export function SavedItemsPage() {
     <main className="mx-auto max-w-3xl px-page pt-4">
       {query.isPending && <SavedSkeleton />}
       {query.isError && <div className="py-20 text-center"><Bookmark className="mx-auto text-foreground-subtle" size={40} /><h1 className="mt-3 text-lg font-extrabold">Couldn&apos;t load saved items</h1><button type="button" onClick={() => void query.refetch()} className="mt-4 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-white">Try again</button></div>}
-      {query.isSuccess && query.data.results.length === 0 && <div className="py-20 text-center"><Bookmark className="mx-auto text-foreground-subtle" size={40} /><h1 className="mt-3 text-lg font-extrabold">Nothing saved yet</h1><p className="mt-1 text-sm text-foreground-muted">Save businesses and products to find them here.</p></div>}
+      {query.isSuccess && query.data.results.length === 0 && <div className="py-20 text-center"><Bookmark className="mx-auto text-foreground-subtle" size={40} /><h1 className="mt-3 text-lg font-extrabold">Nothing saved yet</h1><p className="mt-1 text-sm text-foreground-muted">Save businesses, products, and doctors to find them here.</p></div>}
       {groups.map(([type, items], index) => <SavedGroup key={type} type={type} items={items} first={index === 0} />)}
     </main>
   </div>;
 }
 
 function SavedGroup({ type, items, first }: { type: string; items: SavedItem[]; first: boolean }) {
-  return <section className={first ? "" : "mt-7"}><h2 className="text-lg font-extrabold">{groupTitle(type)}</h2>{type === "product" ? <div className="mt-3 grid grid-cols-2 gap-3">{items.map((saved) => <SavedProductCard key={saved.id} saved={saved} />)}</div> : <div className="mt-3 space-y-3">{items.map((saved) => type === "business" ? <SavedBusinessCard key={saved.id} saved={saved} /> : <GenericSavedCard key={saved.id} saved={saved} />)}</div>}</section>;
+  return <section className={first ? "" : "mt-7"}><h2 className="text-lg font-extrabold">{groupTitle(type)}</h2>{type === "product" ? <div className="mt-3 grid grid-cols-2 gap-3">{items.map((saved) => <SavedProductCard key={saved.id} saved={saved} />)}</div> : <div className="mt-3 space-y-3">{items.map((saved) => type === "business" ? <SavedBusinessCard key={saved.id} saved={saved} /> : type === "doctor" ? <SavedDoctorCard key={saved.id} saved={saved} /> : <GenericSavedCard key={saved.id} saved={saved} />)}</div>}</section>;
 }
 
 function SavedBusinessCard({ saved }: { saved: SavedItem }) {
@@ -42,6 +42,25 @@ function SavedProductCard({ saved }: { saved: SavedItem }) {
   return <article className="relative min-w-0"><SaveButton itemType="product" objectId={saved.object_id} className="absolute right-2 top-2 z-10 flex size-9 items-center justify-center rounded-full bg-white/90 text-brand shadow" /><Link href={`/product/${encodeURIComponent(product.slug)}`}><div className="relative aspect-square overflow-hidden rounded-xl bg-surface-tertiary"><Image src={product.primary_image || "/images/default.jpg"} alt={product.name} fill sizes="(max-width: 768px) 50vw, 360px" className="object-cover" /></div><h3 className="mt-2 line-clamp-2 text-sm font-semibold">{product.name}</h3><p className="mt-1 truncate text-xs text-foreground-muted">{product.categories?.slice(0, 2).map((category) => category.name || category.display_name || category.label).filter(Boolean).join(" · ") || "Uncategorized"}</p><p className="mt-1 text-sm font-extrabold">{formatPrice(product)}</p></Link></article>;
 }
 
+function SavedDoctorCard({ saved }: { saved: SavedItem }) {
+  const doctor = saved.item as SavedDoctor;
+  const business = doctor.business;
+  const address = [business.address.locality, business.city.name].filter(Boolean).join(", ");
+  const specialties = doctor.specialties.map((specialty) => specialty.label || specialty.name).filter(Boolean).join(" · ");
+  return <article className="relative rounded-xl border border-border-subtle p-3 dark:border-border-dark-subtle">
+    <SaveButton itemType="doctor" objectId={saved.object_id} className="absolute right-2 top-2 z-10 flex size-9 items-center justify-center rounded-full bg-white/90 text-brand shadow" />
+    <Link href={`/doctors/${encodeURIComponent(doctor.slug)}`} className="flex gap-3 pr-8">
+      <span className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand dark:bg-brand-950 dark:text-brand-300"><i className="fa-solid fa-user-doctor text-xl" aria-hidden="true" /></span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-extrabold text-foreground dark:text-foreground-dark">{doctor.name}</span>
+        {specialties && <span className="mt-1 block truncate text-xs font-semibold text-foreground-muted dark:text-foreground-dark-muted">{specialties}</span>}
+        {doctor.qualification && <span className="mt-1 block truncate text-xs text-foreground-muted dark:text-foreground-dark-muted">{doctor.qualification}</span>}
+        <span className="mt-2 flex min-w-0 items-center gap-1 text-xs text-foreground-muted dark:text-foreground-dark-muted"><MapPin size={12} className="shrink-0" aria-hidden="true" /><span className="truncate">{business.name}{address ? `, ${address}` : ""}</span></span>
+      </span>
+    </Link>
+  </article>;
+}
+
 function GenericSavedCard({ saved }: { saved: SavedItem }) {
   const name = typeof saved.item.name === "string" ? saved.item.name : groupTitle(saved.item_type).replace(/s$/, "");
   const slug = typeof saved.item.slug === "string" ? saved.item.slug : null;
@@ -52,7 +71,7 @@ function GenericSavedCard({ saved }: { saved: SavedItem }) {
 function groupSavedItems(items: SavedItem[]) {
   const groups = new Map<string, SavedItem[]>();
   for (const item of items) groups.set(item.item_type, [...(groups.get(item.item_type) ?? []), item]);
-  const priority = (type: string) => type === "business" ? 0 : type === "product" ? 1 : 2;
+  const priority = (type: string) => type === "business" ? 0 : type === "product" ? 1 : type === "doctor" ? 2 : 3;
   return [...groups.entries()].sort(([a], [b]) => priority(a) - priority(b) || a.localeCompare(b));
 }
 

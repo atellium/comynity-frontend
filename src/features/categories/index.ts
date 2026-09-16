@@ -1,14 +1,16 @@
 export { default as categoriesReducer, fetchCategories } from "./category.slice";
 export { CategoryCacheRefresher } from "./category-cache-refresher";
-export { getFeaturedCategories } from "./category.service";
+export { getBusinessCategoriesByParent, getFeaturedCategories, getPopularCategories } from "./category.service";
 export {
+	useBusinessCategoriesByParent,
 	useFeaturedCategories,
-
+	usePopularCategories,
 } from "./use-category-collections";
 export type {
 	CategoriesState,
 	CategorySearchItem,
 	FeaturedCategory,
+	PopularCategory,
 } from "./category.types";
 
 import type { CategorySearchItem } from "./category.types";

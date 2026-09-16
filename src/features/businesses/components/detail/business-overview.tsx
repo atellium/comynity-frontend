@@ -84,7 +84,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
 	const [hoursOpen, setHoursOpen] = useState(false);
 	const [showFixedActions, setShowFixedActions] = useState(false);
 	const primaryCategory = business.categories?.[0];
-	const categories = (business.categories ?? []).map((category) => category.display_name).join(" · ");
+	const categories = (business.categories ?? []).map((category) => category.label || category.display_name || category.name).filter(Boolean).join(" · ");
 	const offerings = (business.offerings ?? []).map((offering) => offering.trim()).filter(Boolean).join(" · ");
 	const { location, hours } = business;
 	const showHours = hasDisplayableBusinessHours(hours);
@@ -139,6 +139,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
       return url ? [{ label: socialLabel(network), href: externalUrl(url), icon: socialIcon(network), color: socialColor(network) }] : [];
     });
   const services = (business.services ?? []).map((service) => service.trim()).filter(Boolean);
+  const showDoctors = business.sections?.includes("doctor") ?? false;
   const realProducts = business.product;
   const hasRealProducts = Boolean((realProducts?.items?.length ?? 0) > 0);
   const displayProducts = hasRealProducts ? realProducts : getDemoBusinessProducts(business);
@@ -214,7 +215,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
             </ul>
           </section>
         )}
-        {/* <BusinessDoctorsSection businessSlug={slug} phone={business.contact.phone} /> */}
+        <BusinessDoctorsSection businessSlug={slug} phone={business.contact.phone} enabled={showDoctors} />
         <BusinessProductsSection product={displayProducts} businessSlug={slug} />
         <BusinessGallery business={business} />
         {contactOptions.length > 0 && (
