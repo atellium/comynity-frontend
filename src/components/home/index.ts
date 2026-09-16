@@ -1,4 +1,5 @@
 export { HomeSearchLink } from "./home-search-link";
+export { CategorySlider } from "./category-slider";
 export { HomeBannerSlider } from "./home-banner-slider";
 export { ListBusinessCta } from "./list-business-cta";
 export { HomeFooter } from "./home-footer";

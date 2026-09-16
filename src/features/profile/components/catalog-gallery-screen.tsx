@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import MobileHeader from "@/components/layout/MobileHeader";
 import { compressImage } from "@/lib/compress-image";
@@ -35,20 +35,11 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
   const productQuery = useQuery({ queryKey: productQueryKey, queryFn: () => getOwnedProduct(businessSlug, catalogSlug) });
   const uploadsQuery = useQuery({ queryKey: uploadsQueryKey, queryFn: getBusinessUploads });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [savedUploads, setSavedUploads] = useState<BusinessUpload[]>([]);
+  const [selectedUploads, setSelectedUploads] = useState<BusinessUpload[]>([]);
   const [draftImages, setDraftImages] = useState<DraftImage[]>([]);
   const [initialized, setInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  const productUploads = useMemo(
-    () => (productQuery.data?.images ?? []).map((image) => image.upload).filter((upload) => upload?.url),
-    [productQuery.data?.images],
-  );
-  const uploads = useMemo(
-    () => [...savedUploads, ...productUploads, ...(uploadsQuery.data ?? [])].filter((upload, index, items) => items.findIndex((item) => item.id === upload.id) === index),
-    [productUploads, savedUploads, uploadsQuery.data],
-  );
 
   useEffect(() => {
     const previewUrls = draftPreviewUrls.current;
@@ -63,8 +54,9 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
     let cancelled = false;
     queueMicrotask(() => {
       if (cancelled) return;
-      const orderedIds = [...(productQuery.data.images ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0)).map((image) => image.upload.id);
-      setSelectedIds(orderedIds);
+      const orderedImages = [...(productQuery.data.images ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
+      setSelectedIds(orderedImages.map((image) => image.upload.id));
+      setSelectedUploads(orderedImages.map((image) => image.upload).filter((upload) => upload?.url));
       setInitialized(true);
     });
     return () => { cancelled = true; };
@@ -81,7 +73,7 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
     onSuccess: async ({ imageIds, uploaded }) => {
       draftImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
       draftPreviewUrls.current.clear();
-      setSavedUploads((current) => [...uploaded, ...current.filter((item) => !uploaded.some((newItem) => newItem.id === item.id))]);
+      setSelectedUploads((current) => [...current.filter((item) => imageIds.includes(item.id)), ...uploaded]);
       setSelectedIds(imageIds);
       setDraftImages([]);
       setSuccess("Product images saved successfully.");
@@ -94,17 +86,6 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
       setError(typeof detail === "string" ? detail : requestError instanceof Error ? requestError.message : "Unable to save product images. Your changes have been preserved.");
     },
   });
-
-  function toggleUpload(upload: BusinessUpload) {
-    setError(null);
-    setSuccess(null);
-    setSelectedIds((current) => {
-      if (current.includes(upload.id)) return current.filter((id) => id !== upload.id);
-      if (current.length + draftImages.length < maximumImages) return [...current, upload.id];
-      else setError(`The product image limit is ${maximumImages}. Remove an image before adding more.`);
-      return current;
-    });
-  }
 
   function addFiles(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? []).filter((file) => file.type.startsWith("image/"));
@@ -123,7 +104,7 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
 
   async function prepareDraftImages(files: File[]) {
     try {
-      const compressed = await Promise.all(files.map((file) => compressImage(file, { maxWidth: 1024, quality: 0.9 })));
+      const compressed = await Promise.all(files.map((file) => compressImage(file, { maxWidth: 992, quality: 0.87 })));
       setDraftImages((current) => [...current, ...compressed.map((file) => {
         const previewUrl = URL.createObjectURL(file);
         draftPreviewUrls.current.add(previewUrl);
@@ -137,6 +118,7 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
   function removeSelected(uploadId: string) {
     setError(null);
     setSuccess(null);
+    setSelectedUploads((current) => current.filter((upload) => upload.id !== uploadId));
     setSelectedIds((current) => current.filter((id) => id !== uploadId));
   }
 
@@ -156,6 +138,7 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
   function moveSelectedUpload(index: number, direction: -1 | 1) {
     setSuccess(null);
     setSelectedIds((current) => moveArrayItem(current, index, direction));
+    setSelectedUploads((current) => moveArrayItem(current, index, direction));
   }
 
   function moveDraft(index: number, direction: -1 | 1) {
@@ -164,9 +147,7 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
   }
 
   const isBusy = save.isPending;
-  const displayError = error ?? (productQuery.isError ? "Couldn't load this product." : uploadsQuery.isError ? "Couldn't load your uploads. Please try again." : null);
-  const selectedUploads = selectedIds.map((id) => uploads.find((upload) => upload.id === id)).filter((upload): upload is BusinessUpload => Boolean(upload));
-  const availableUploads = uploads.filter((upload) => !selectedIds.includes(upload.id));
+  const displayError = error ?? (productQuery.isError ? "Couldn't load this product." : uploadsQuery.isError ? "Couldn't load current product images. Please try again." : null);
   const selectedCount = selectedIds.length + draftImages.length;
 
   return <div className="min-h-dvh bg-slate-50 pb-10">
@@ -188,20 +169,6 @@ export function CatalogGalleryScreen({ businessSlug, catalogSlug }: { businessSl
       </section>
       {success && <p role="status" className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm font-bold text-emerald-700"><i className="fa-solid fa-circle-check mr-2" aria-hidden="true" />{success}</p>}
       <button type="button" disabled={!initialized || isBusy} onClick={() => save.mutate()} className="my-5 h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white shadow-[0_8px_20px_rgba(59,130,246,0.18)] disabled:opacity-50">{save.isPending ? "Saving images..." : "Save images"}</button>
-      <section className="border-t border-slate-200 pt-5">
-        <div className="mb-3 flex items-center justify-between gap-3">
-          <h2 className="text-xs font-extrabold uppercase tracking-wide text-foreground-muted">All uploaded images</h2>
-          <span className="text-[11px] font-bold text-foreground-muted">{availableUploads.length} available</span>
-        </div>
-        {!productQuery.isPending && !uploadsQuery.isPending && uploads.length === 0 && <button type="button" onClick={() => inputRef.current?.click()} disabled={isBusy} className="flex aspect-video w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white text-brand disabled:opacity-50"><i className="fa-solid fa-cloud-arrow-up text-2xl" /><span className="mt-2 text-xs font-extrabold">Upload product images</span></button>}
-        {availableUploads.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{availableUploads.map((upload) => {
-        return <article key={upload.id} className="group relative aspect-square overflow-hidden rounded-xl border-2 border-transparent bg-slate-100 text-left">
-          <button type="button" onClick={() => toggleUpload(upload)} disabled={isBusy} className="absolute inset-0 disabled:cursor-default" aria-label={`Select ${upload.title || "uploaded image"}`}>
-            <Image src={upload.url} alt={upload.title || "Uploaded image"} fill sizes="(max-width: 640px) 50vw, 240px" className="object-cover transition-transform group-enabled:group-hover:scale-[1.02]" />
-          </button>
-        </article>;
-      })}</div>}
-      </section>
     </main>
   </div>;
 }

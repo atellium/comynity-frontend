@@ -2,7 +2,7 @@
 
 import axios from "axios";
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import MobileHeader from "@/components/layout/MobileHeader";
 import { FullScreenModal } from "@/components/modals";
@@ -12,7 +12,7 @@ import type { BusinessUpload, OwnedBusinessInfo } from "../profile.types";
 
 const maximumImages = 10;
 const maximumImagesPerUpload = 5;
-const imageCompressionOptions = { maxWidth: 1024, quality: 0.9 };
+const imageCompressionOptions = { maxWidth: 992, quality: 0.87 };
 type DraftImage = { id: string; file: File; previewUrl: string };
 
 function createDraftId() {
@@ -25,16 +25,11 @@ export function BusinessGalleryEditor({ business, onClose, onSaved }: { business
   const draftPreviewUrls = useRef(new Set<string>());
   const queryKey = ["business-uploads"] as const;
   const query = useQuery({ queryKey, queryFn: getBusinessUploads });
-  const [savedUploads, setSavedUploads] = useState<BusinessUpload[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [selectedUploads, setSelectedUploads] = useState<BusinessUpload[]>([]);
   const [draftImages, setDraftImages] = useState<DraftImage[]>([]);
   const [initialized, setInitialized] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const uploads = useMemo(
-    () => [...savedUploads, ...(query.data ?? [])].filter((upload, index, items) => items.findIndex((item) => item.id === upload.id) === index),
-    [query.data, savedUploads],
-  );
 
   useEffect(() => {
     const previewUrls = draftPreviewUrls.current;
@@ -48,7 +43,9 @@ export function BusinessGalleryEditor({ business, onClose, onSaved }: { business
     if (!query.data || initialized) return;
     queueMicrotask(() => {
       const galleryUrls = new Set(business.media.gallery.filter(Boolean));
-      setSelectedIds(new Set(query.data.filter((upload) => galleryUrls.has(upload.url)).map((upload) => upload.id)));
+      const galleryUploads = query.data.filter((upload) => galleryUrls.has(upload.url));
+      setSelectedIds(new Set(galleryUploads.map((upload) => upload.id)));
+      setSelectedUploads(galleryUploads);
       setInitialized(true);
     });
   }, [business.media.gallery, initialized, query.data]);
@@ -64,7 +61,7 @@ export function BusinessGalleryEditor({ business, onClose, onSaved }: { business
     onSuccess: ({ updated, uploaded }) => {
       draftImages.forEach((image) => URL.revokeObjectURL(image.previewUrl));
       draftPreviewUrls.current.clear();
-      setSavedUploads((current) => [...uploaded, ...current.filter((item) => !uploaded.some((newItem) => newItem.id === item.id))]);
+      setSelectedUploads((current) => [...current.filter((item) => selectedIds.has(item.id)), ...uploaded]);
       setSelectedIds((current) => new Set([...current, ...uploaded.map((upload) => upload.id)]));
       setDraftImages([]);
       onSaved(updated);
@@ -75,17 +72,6 @@ export function BusinessGalleryEditor({ business, onClose, onSaved }: { business
       setError(typeof detail === "string" ? detail : requestError instanceof Error ? requestError.message : "Unable to save gallery. Your changes have been preserved.");
     },
   });
-
-  function toggleUpload(upload: BusinessUpload) {
-    setError(null);
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(upload.id)) next.delete(upload.id);
-      else if (next.size < maximumImages) next.add(upload.id);
-      else setError(`The gallery limit is ${maximumImages} images. Remove an image before adding more.`);
-      return next;
-    });
-  }
 
   function addFiles(event: ChangeEvent<HTMLInputElement>) {
     const files = Array.from(event.target.files ?? []).filter((file) => file.type.startsWith("image/"));
@@ -116,6 +102,7 @@ export function BusinessGalleryEditor({ business, onClose, onSaved }: { business
 
   function removeSelected(uploadId: string) {
     setError(null);
+    setSelectedUploads((current) => current.filter((upload) => upload.id !== uploadId));
     setSelectedIds((current) => {
       const next = new Set(current);
       next.delete(uploadId);
@@ -136,9 +123,7 @@ export function BusinessGalleryEditor({ business, onClose, onSaved }: { business
   }
 
   const isBusy = save.isPending;
-  const displayError = error ?? (query.isError ? "Couldn't load your uploads. Please try again." : null);
-  const selectedUploads = uploads.filter((upload) => selectedIds.has(upload.id));
-  const availableUploads = uploads.filter((upload) => !selectedIds.has(upload.id));
+  const displayError = error ?? (query.isError ? "Couldn't load your current gallery images. Please try again." : null);
   const selectedCount = selectedIds.size + draftImages.length;
 
   return <FullScreenModal open onClose={() => !isBusy && onClose()} title="Business gallery">
@@ -160,18 +145,6 @@ export function BusinessGalleryEditor({ business, onClose, onSaved }: { business
           {(selectedUploads.length > 0 || draftImages.length > 0) ? <div className="grid grid-cols-3 gap-2">{selectedUploads.map((upload, index) => <div key={upload.id} className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 ring-1 ring-brand-100"><Image src={upload.url} alt="" fill sizes="(max-width: 640px) 30vw, 200px" className="object-cover" /><button type="button" onClick={() => removeSelected(upload.id)} disabled={isBusy} aria-label={`Remove selected image ${index + 1}`} className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-white/90 text-danger shadow disabled:opacity-50"><i className="fa-solid fa-trash" /></button></div>)}{draftImages.map((draft, index) => <div key={draft.id} className="relative aspect-square overflow-hidden rounded-xl bg-slate-100 ring-1 ring-brand-100"><Image src={draft.previewUrl} alt="" fill sizes="(max-width: 640px) 30vw, 200px" className="object-cover" unoptimized /><button type="button" onClick={() => removeDraft(draft.id)} disabled={isBusy} aria-label={`Remove new image ${index + 1}`} className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-white/90 text-danger shadow disabled:opacity-50"><i className="fa-solid fa-trash" /></button></div>)}</div> : <button type="button" onClick={() => inputRef.current?.click()} disabled={isBusy} className="flex aspect-video w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-brand-200 bg-white text-brand disabled:opacity-50"><i className="fa-solid fa-cloud-arrow-up text-2xl" /><span className="mt-2 text-xs font-extrabold">Select gallery images</span></button>}
         </section>
         <button type="button" disabled={!initialized || isBusy} onClick={() => save.mutate()} className="my-5 h-12 w-full rounded-xl bg-brand text-sm font-extrabold text-white shadow-[0_8px_20px_rgba(59,130,246,0.18)] disabled:opacity-50">{save.isPending ? "Saving gallery..." : "Save gallery"}</button>
-        <section className="border-t border-slate-200 pt-5">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-xs font-extrabold uppercase tracking-wide text-foreground-muted">All uploaded images</h2>
-            <span className="text-[11px] font-bold text-foreground-muted">{availableUploads.length} available</span>
-          </div>
-          {!query.isPending && uploads.length === 0 && <button type="button" onClick={() => inputRef.current?.click()} disabled={isBusy} className="flex aspect-video w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-white text-brand disabled:opacity-50"><i className="fa-solid fa-cloud-arrow-up text-2xl" /><span className="mt-2 text-xs font-extrabold">Upload gallery images</span></button>}
-          {availableUploads.length > 0 && <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{availableUploads.map((upload) => {
-          return <button key={upload.id} type="button" onClick={() => toggleUpload(upload)} disabled={isBusy} className="group relative aspect-square overflow-hidden rounded-xl border-2 border-transparent bg-slate-100 text-left disabled:cursor-default">
-            <Image src={upload.url} alt={upload.title || "Uploaded image"} fill sizes="(max-width: 640px) 50vw, 240px" className="object-cover transition-transform group-enabled:group-hover:scale-[1.02]" />
-          </button>;
-        })}</div>}
-        </section>
       </main>
     </div>
   </FullScreenModal>;

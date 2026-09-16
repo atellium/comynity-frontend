@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import {
+	CategorySlider,
 	HomeFooter,
 	HomeSearchLink,
 	HomeBannerSlider,
@@ -119,8 +120,8 @@ export default function Home() {
 			</h1>
 			<MobileHomeHeader />
 			<HomeSearchLink />
-			{/* <HomeBannerSlider /> */}
 			<PopularCategoriesGrid />
+			<CategorySlider title="Shopping & Retail" categorySlug="shopping-retail" />
 			{/* <NearbyOffers /> */}
 			<ListBusinessCta />
 			<NearbyBusinesses />

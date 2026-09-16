@@ -21,3 +21,21 @@ export async function getFeaturedCategories(signal?: AbortSignal) {
 
 	return data.results;
 }
+
+export async function getPopularCategories(signal?: AbortSignal) {
+	const { data } = await publicApiClient.get<PopularCategoriesResponse>(
+		"/api/categories/business/",
+		{ params: { is_popular: true }, signal },
+	);
+
+	return data.results;
+}
+
+export async function getBusinessCategoriesByParent(parent: string, signal?: AbortSignal) {
+	const { data } = await publicApiClient.get<PopularCategoriesResponse>(
+		"/api/categories/business/",
+		{ params: { parent }, signal },
+	);
+
+	return data.results;
+}

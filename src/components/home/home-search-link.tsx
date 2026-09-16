@@ -7,7 +7,7 @@ export function HomeSearchLink() {
 		<div className="mx-auto w-full max-w-3xl px-2.5 ">
 			<Link
 				href="/search"
-				className="flex h-16 items-center gap-3 rounded-full border border-border-subtle bg-gray-200 pl-4 pr-2 text-foreground-secondary transition-all hover:border-border-strong hover:shadow-lg dark:border-border-dark-subtle dark:bg-surface-dark dark:text-foreground-dark-secondary dark:hover:border-border-dark-strong"
+				className="flex h-16 items-center gap-3 rounded-full border border-border-subtle bg-gray-200/60 pl-4 pr-2 text-foreground-secondary transition-all hover:border-border-strong hover:shadow-lg dark:border-border-dark-subtle dark:bg-surface-dark dark:text-foreground-dark-secondary dark:hover:border-border-dark-strong"
 			>
 				<Search
 					size={24}

@@ -1,8 +1,12 @@
 export type BusinessCategory = {
   id?: number;
   slug: string;
+  label?: string;
+  name?: string;
   display_name: string;
 };
+
+export type BusinessSection = "product" | "offer" | "property" | "course" | "doctor" | "pricing" | "menu" | "package";
 
 export type BusinessHoursStatus = {
   status: "open" | "closing_soon" | "closed";
@@ -109,8 +113,24 @@ export type BusinessProduct = {
   is_featured: boolean;
   is_available?: boolean;
   primary_image?: string | null;
-  images?: string[] | null;
+  images?: ProductListImage[] | null;
   sort_order?: number;
+  business?: {
+    id: string;
+    name: string;
+    slug: string;
+    locality?: string;
+    media?: {
+      cover_image?: string | null;
+      thumbnail?: string | null;
+    };
+    city?: {
+      id: number;
+      name: string;
+      state_id?: number;
+      state?: string;
+    };
+  };
 };
 
 export type BusinessProductsListResponse = {
@@ -120,6 +140,12 @@ export type BusinessProductsListResponse = {
     slug: string;
   };
   categories: BusinessProductCategory[] | null;
+  pagination: BusinessListResponse["pagination"];
+  results: BusinessProduct[] | null;
+};
+
+export type ProductsListResponse = {
+  category: BusinessProductCategory | null;
   pagination: BusinessListResponse["pagination"];
   results: BusinessProduct[] | null;
 };
@@ -146,11 +172,14 @@ export type ProductDetailUploadImage = {
   id: string;
   upload: {
     id: string;
+    object_key?: string;
     url: string;
     title?: string;
   };
   sort_order: number;
 };
+
+export type ProductListImage = string | ProductDetailUploadImage;
 
 export type ProductVariantValue = {
   value: string | number;
@@ -236,6 +265,7 @@ export type BusinessNameDetail = {
   description: string | null;
   services: string[] | null;
   offerings: string[] | null;
+  sections?: BusinessSection[] | null;
   is_verified: boolean;
   categories: BusinessCategory[] | null;
   media: {
@@ -308,4 +338,95 @@ export type NearbyOffer = {
 export type NearbyOffersResponse = {
   pagination: BusinessListResponse["pagination"];
   results: NearbyOffer[] | null;
+};
+
+export type DoctorSpecialty = {
+  id: number;
+  name: string;
+  label: string;
+  slug: string;
+  aliases: string;
+  body_part: string;
+};
+
+export type DoctorListItem = {
+  id: string;
+  name: string;
+  slug: string;
+  qualification: string;
+  registration_number: string;
+  registration_council: string;
+  registration_year: number | null;
+  consultation_fee: string | null;
+  gender: string;
+  bio: string;
+  languages: string[];
+  treatments: string[];
+  is_active: boolean;
+  is_featured: boolean;
+  specialties: DoctorSpecialty[];
+  business: {
+    id: string;
+    name: string;
+    slug: string;
+    cover_image: string | null;
+    distance_km: number | null;
+    is_verified: boolean;
+    contact: {
+      phone: string | null;
+      alternate_numbers: string[] | null;
+      whatsapp: string | null;
+      email: string | null;
+      website: string | null;
+    };
+    address: {
+      address: string | null;
+      landmark: string | null;
+      locality: string;
+      postal_code: string | null;
+      latitude: number | null;
+      longitude: number | null;
+    };
+    city: {
+      id: number;
+      name: string;
+      slug: string;
+    };
+  };
+  schedule: {
+    is_available: boolean;
+    is_today?: boolean;
+    next_available: string;
+    full_schedule: Array<{
+      schedule_type: "weekly" | "monthly_weekday" | "monthly_date";
+      schedule_label?: string;
+      weekday: number | null;
+      week_of_month?: number | null;
+      day_of_month: number | null;
+      start_time: string;
+      end_time: string;
+      consultation_type: "walk_in" | "by_appointment";
+    }>;
+  };
+};
+
+export type DoctorListResponse = {
+  pagination: {
+    count: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+  };
+  specialty: DoctorSpecialty | null;
+  results: DoctorListItem[] | null;
+};
+
+export type BusinessDoctorsResponse = Omit<DoctorListResponse, "specialty"> & {
+  business: {
+    id: string;
+    name: string;
+    slug: string;
+  };
 };

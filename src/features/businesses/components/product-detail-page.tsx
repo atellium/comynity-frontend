@@ -10,7 +10,7 @@ import { useState } from "react";
 import { BottomSheetModal } from "@/components/modals";
 import { SaveButton } from "@/features/saved-items";
 import { getBusinessNameBySlug, getBusinessProducts, getProductBySlug } from "../business.service";
-import type { BusinessProduct } from "../business.types";
+import type { BusinessProduct, ProductListImage } from "../business.types";
 import { getDemoBusinessProductsPage, getDemoProductBySlug } from "../demo-products";
 import { ProductImageGallery } from "./product-image-gallery";
 
@@ -157,7 +157,7 @@ export function ProductDetailPage({ slug }: { slug: string }) {
           {businessSlug && <ChevronRight size={16} className="shrink-0 text-foreground-subtle" aria-hidden="true" />}
         </BusinessCardLink>
       </section>}
-      {similarProducts.length > 0 && <section className="mt-6"><h2 className="px-page text-base font-extrabold">Similar products</h2><div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-5 px-page">{similarProducts.map((item) => <article key={item.id} className="min-w-0"><Link href={`/product/${encodeURIComponent(item.slug)}`} className="block"><div className="relative aspect-square overflow-hidden rounded-xl bg-surface-tertiary dark:bg-surface-dark-tertiary"><Image src={productListImage(item)} alt={item.name} fill sizes="(max-width: 768px) 50vw, 360px" className="object-cover transition-transform duration-200 hover:scale-[1.02]" />{item.is_featured && <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[10px] font-extrabold text-brand shadow-sm"><BadgeCheck size={11} aria-hidden="true" />Featured</span>}</div><h3 className="mt-2 line-clamp-2 text-sm font-semibold leading-5 text-foreground dark:text-foreground-dark">{item.name}</h3>{variantRows(item).length > 0 && <div className="mt-1 space-y-0.5">{variantRows(item).map((variant) => <p key={variant.name} className="truncate text-[11px] text-foreground-muted dark:text-foreground-dark-muted"><span className="font-bold">{variant.name}:</span> {variant.values.join(", ")}</p>)}</div>}<p className="mt-1 text-sm font-extrabold text-foreground dark:text-foreground-dark">{displayPrice(item.price, item.max_price, item.price_type)}</p></Link></article>)}</div></section>}
+      {similarProducts.length > 0 && <section className="mt-6"><h2 className="px-page text-base font-extrabold">Similar products</h2><div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-5 px-page">{similarProducts.map((item) => <article key={item.id} className="min-w-0"><Link href={`/product/${encodeURIComponent(item.slug)}`} className="block"><div className="relative aspect-square overflow-hidden rounded-xl bg-surface-tertiary dark:bg-surface-dark-tertiary"><Image src={productListImage(item)} alt={item.name} fill sizes="(max-width: 768px) 50vw, 360px" className="object-cover transition-transform duration-200 hover:scale-[1.02]" />{item.is_featured && <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-1 text-[10px] font-extrabold text-brand shadow-sm"><BadgeCheck size={11} aria-hidden="true" />Featured</span>}</div><h3 className="mt-2 line-clamp-2 text-base font-normal leading-5 text-foreground dark:text-foreground-dark">{item.name}</h3>{variantRows(item).length > 0 && <div className="mt-1 space-y-0.5">{variantRows(item).map((variant) => <p key={variant.name} className="truncate text-[11px] text-foreground-muted dark:text-foreground-dark-muted"><span className="font-bold">{variant.name}:</span> {variant.values.join(", ")}</p>)}</div>}<p className="mt-1 text-sm font-extrabold text-foreground dark:text-foreground-dark">{displayPrice(item.price, item.max_price, item.price_type)}</p></Link></article>)}</div></section>}
     </main>
     {hasBusiness && <div className="fixed inset-x-0 bottom-0 z-50 border-t border-border-subtle bg-white/95 px-page pb-[calc(env(safe-area-inset-bottom)+12px)] pt-3 shadow-[0_-6px_20px_rgba(0,0,0,0.08)] backdrop-blur dark:border-border-dark-subtle dark:bg-surface-dark/95"><div className="mx-auto grid max-w-3xl grid-cols-2 gap-3"><FixedProductAction href={phoneNumber ? `tel:${phoneNumber}` : ""} label="Call now" icon="fa-phone" variant="outline" /><FixedProductAction href={contactHref} label={contactLabel} icon={whatsappNumber ? "fa-whatsapp" : "fa-phone"} variant="solid" external={Boolean(whatsappNumber)} brandIcon={Boolean(whatsappNumber)} /></div></div>}
     <BottomSheetModal open={shareOpen} onClose={() => setShareOpen(false)} title={`Share ${product.name}`} closeLabel="Close share options">
@@ -189,7 +189,12 @@ function FixedProductAction({ href, icon, label, variant, external = false, bran
 }
 
 function productListImage(product: BusinessProduct) {
-  return product.images?.[0] || product.primary_image || "/images/default.jpg";
+  return imageUrl(product.images?.[0]) || product.primary_image || "/images/default.jpg";
+}
+
+function imageUrl(image: ProductListImage | undefined) {
+  if (!image) return null;
+  return typeof image === "string" ? image : image.upload.url;
 }
 
 function variantRows(product: BusinessProduct) {

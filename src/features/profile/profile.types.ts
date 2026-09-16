@@ -101,8 +101,8 @@ export type BusinessCategoryOption = { id: number; name: string; display_name: s
 export type BusinessCityOption = { id: number; name: string; slug: string; tier: number; state: { id: number; name: string; slug: string; code: string } };
 export type BusinessUpdatePayload = Partial<{
   name: string; handle: string; categories: number[]; address: string; landmark: string; locality: string; city: number; postal_code: string;
-  latitude: number; longitude: number; phone: string; whatsapp: string; email: string; website: string; description: string;
-  established_year: number; alternate_numbers: string[]; social_urls: Record<string, string>; is_active: boolean;
+  latitude: number; longitude: number; phone: string; whatsapp: string; email: string; website: string; description: string | null;
+  established_year: number | null; alternate_numbers: string[]; social_urls: Record<string, string>; is_active: boolean;
   display_full_address: boolean; display_business_hours: boolean; seo_title: string; seo_description: string; seo_keywords: string;
   services: string[]; offerings: string[]; cover_image: string; gallery: string[];
 }>;

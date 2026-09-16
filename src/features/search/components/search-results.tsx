@@ -2,8 +2,8 @@
 
 import { useState, type ReactNode } from "react";
 import { LoaderCircle } from "lucide-react";
-import { getCategoryDisplayName, type CategorySearchItem } from "@/features/categories";
-import { useCategoryNavigation } from "../use-category-navigation";
+import { useSearchItemNavigation } from "../use-category-navigation";
+import type { SearchItem } from "../search.types";
 
 function highlightMatch(label: string, query: string): ReactNode[] {
   const normalizedQuery = query.trim().toLocaleLowerCase();
@@ -37,9 +37,9 @@ export function SearchResults({
   results,
 }: {
   query: string;
-  results: CategorySearchItem[];
+  results: SearchItem[];
 }) {
-  const openCategory = useCategoryNavigation();
+  const openItem = useSearchItemNavigation();
   const [navigatingSlug, setNavigatingSlug] = useState<string | null>(null);
   return (
     <section
@@ -48,16 +48,16 @@ export function SearchResults({
     >
       {/* 3. SEARCH RESULTS (Clean, Borderless Vertical List) */}
       <div>
-        {results.map((category) => {
-          const label = getCategoryDisplayName(category);
-          const isNavigating = navigatingSlug === category.slug;
+        {results.map((item) => {
+          const label = item.display_name || item.label || item.name;
+          const isNavigating = navigatingSlug === `${item.type}:${item.slug}`;
           return (
             <button
-              key={category.slug}
+              key={`${item.type}-${item.id}-${item.slug}`}
               type="button"
               disabled={navigatingSlug !== null}
               onClick={() => {
-                if (openCategory(category)) setNavigatingSlug(category.slug);
+                if (openItem(item)) setNavigatingSlug(`${item.type}:${item.slug}`);
               }}
               className="group flex min-h-16 w-full items-center gap-3.5 border-b border-border-subtle px-4 text-left text-[16px] text-foreground transition-colors last:border-0 hover:bg-brand-50/60 disabled:cursor-wait disabled:opacity-70 dark:border-border-dark-subtle dark:text-foreground-dark dark:hover:bg-brand/10"
             >
@@ -70,6 +70,9 @@ export function SearchResults({
               </span>
               <span className="min-w-0 flex-1 truncate font-semibold">
                 {highlightMatch(label, query)}
+              </span>
+              <span className="shrink-0 rounded-full bg-slate-100 px-2 py-1 text-[10px] font-extrabold uppercase text-foreground-muted">
+                {item.type === "doctor" ? "Doctor" : item.type === "product" ? "Product" : "Business"}
               </span>
               <i
                 className="fa-regular fa-arrow-up-right shrink-0 text-[14px] text-brand transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"

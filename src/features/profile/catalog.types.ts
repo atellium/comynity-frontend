@@ -139,3 +139,96 @@ export type OwnedProductResponse = {
 export type ProductCategorySearchResponse = {
   results: CatalogCategory[] | null;
 };
+
+export type DoctorSpecialty = {
+  id: number;
+  name: string;
+  label: string;
+  slug: string;
+  aliases: string;
+  body_part: string;
+  image?: string;
+  sort_order?: number;
+  is_active?: boolean;
+  is_featured?: boolean;
+  display_name?: string;
+};
+
+export type DoctorSchedulePayload = {
+  schedule_type: "weekly" | "monthly_weekday" | "monthly_date";
+  weekday?: number | null;
+  week_of_month?: number | null;
+  day_of_month?: number | null;
+  start_time: string;
+  end_time: string;
+  consultation_type: "walk_in" | "by_appointment";
+  is_active: boolean;
+};
+
+export type DoctorPayload = {
+  name: string;
+  specialty_ids: number[];
+  qualification: string;
+  registration_number?: string;
+  registration_council?: string;
+  registration_year?: number | null;
+  consultation_fee?: string;
+  gender?: string;
+  bio?: string;
+  languages?: string[];
+  treatments?: string[];
+  is_active?: boolean;
+  schedules?: DoctorSchedulePayload[];
+};
+
+export type ManagedDoctor = {
+  id: string;
+  name: string;
+  slug: string;
+  qualification: string;
+  profile_image?: string | null;
+  registration_number: string;
+  registration_council: string;
+  registration_year: number | null;
+  consultation_fee: string;
+  gender: string;
+  bio: string;
+  languages: string[];
+  treatments: string[];
+  is_active: boolean;
+  is_featured?: boolean;
+  specialties: DoctorSpecialty[];
+  schedule?: {
+    is_available?: boolean;
+    next_available?: string | null;
+    full_schedule?: Array<{
+      schedule_type: "weekly" | "monthly_weekday" | "monthly_date";
+      schedule_label?: string;
+      weekday: number | null;
+      week_of_month?: number | null;
+      day_of_month: number | null;
+      start_time: string;
+      end_time: string;
+      consultation_type: "walk_in" | "by_appointment";
+    }>;
+  };
+  business?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+};
+
+export type ManagedDoctorsResponse = {
+  business?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  pagination?: import("@/features/businesses/business.types").BusinessListResponse["pagination"];
+  results: ManagedDoctor[] | null;
+};
+
+export type DoctorSpecialtySearchResponse = {
+  results: DoctorSpecialty[] | null;
+};
