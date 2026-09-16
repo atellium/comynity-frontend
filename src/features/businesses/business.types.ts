@@ -347,6 +347,10 @@ export type DoctorSpecialty = {
   slug: string;
   aliases: string;
   body_part: string;
+  image?: string;
+  sort_order?: number;
+  is_active?: boolean;
+  is_featured?: boolean;
 };
 
 export type DoctorListItem = {
@@ -421,6 +425,18 @@ export type DoctorListResponse = {
   };
   specialty: DoctorSpecialty | null;
   results: DoctorListItem[] | null;
+};
+
+export type DoctorSpecialtiesResponse = {
+  pagination: {
+    count: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+  };
+  results: DoctorSpecialty[] | null;
 };
 
 export type BusinessDoctorsResponse = Omit<DoctorListResponse, "specialty"> & {
