@@ -121,6 +121,7 @@ export default function Home() {
 			<MobileHomeHeader />
 			<HomeSearchLink />
 			<PopularCategoriesGrid />
+			<CategorySlider title="Health & Medical" categorySlug="health-medical" />
 			<CategorySlider title="Shopping & Retail" categorySlug="shopping-retail" />
 			{/* <NearbyOffers /> */}
 			<ListBusinessCta />
