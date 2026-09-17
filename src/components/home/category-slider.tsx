@@ -15,7 +15,7 @@ export function CategorySlider({ title, categorySlug }: { title: string; categor
 	if (categories.length === 0) return null;
 
 	return (
-		<section className="mx-auto w-full max-w-5xl pb-4 pt-2" aria-labelledby={titleId}>
+		<section className="mx-auto w-full max-w-5xl pt-2" aria-labelledby={titleId}>
 			<CategorySliderTitle title={title} titleId={titleId} />
 			<div className="hide-scrollbar flex gap-3 overflow-x-auto bg-surface px-page pb-2 dark:bg-surface-dark">
 				{categories.map((category) => {
