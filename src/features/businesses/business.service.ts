@@ -6,7 +6,9 @@ import type {
   ProductDetailApiResponse,
   BusinessProductsListParams,
   BusinessProductsListResponse,
+  BusinessOffersResponse,
   BusinessDoctorsResponse,
+  DoctorSpecialtiesResponse,
   DoctorListItem,
   DoctorListResponse,
   NearbyOffersResponse,
@@ -14,13 +16,36 @@ import type {
   ProductVariant,
 } from "./business.types";
 
-export async function getNearbyOffers({ lat, lng, page = 1 }: { lat: number; lng: number; page?: number }) {
-  const { data } = await publicApiClient.get<NearbyOffersResponse>("/api/offers/nearby/", { params: { lat, lng, page } });
+export async function getNearbyOffers({
+  lat,
+  lng,
+  radiusKm = 5,
+  page = 1,
+  pageSize = 20,
+  sortBy = "name",
+  sortOrder = "asc",
+}: {
+  lat: number;
+  lng: number;
+  radiusKm?: number;
+  page?: number;
+  pageSize?: number;
+  sortBy?: "name" | "sort_order" | "starts_at" | "expires_at";
+  sortOrder?: "asc" | "desc";
+}) {
+  const { data } = await publicApiClient.get<NearbyOffersResponse>("/api/offers/nearby/", {
+    params: { lat, lng, radius_km: radiusKm, page, page_size: pageSize, sort_by: sortBy, sort_order: sortOrder },
+  });
   return { ...data, results: data.results ?? [] };
 }
 
 export async function getDoctors({ lat, lng, specialty, page = 1 }: { lat: number; lng: number; specialty: string; page?: number }) {
   const { data } = await publicApiClient.get<DoctorListResponse>("/api/doctors/", { params: { lat, lng, specialty, page } });
+  return { ...data, results: data.results ?? [] };
+}
+
+export async function getFeaturedDoctorSpecialties() {
+  const { data } = await publicApiClient.get<DoctorSpecialtiesResponse>("/api/doctors/specialties/", { params: { is_featured: true } });
   return { ...data, results: data.results ?? [] };
 }
 
@@ -187,6 +212,17 @@ export async function getBusinessProducts(
   return {
     ...data,
     categories: data.categories ?? [],
+    results: data.results ?? [],
+  };
+}
+
+export async function getBusinessOffers(businessSlug: string) {
+  const { data } = await publicApiClient.get<BusinessOffersResponse>(
+    `/api/businesses/${encodeURIComponent(businessSlug)}/offers/`,
+  );
+
+  return {
+    ...data,
     results: data.results ?? [],
   };
 }

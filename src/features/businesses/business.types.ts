@@ -246,8 +246,9 @@ export type BusinessDetailOffer = {
   title: string;
   description: string;
   image: string | null;
-  starts_at: string;
-  expires_at: string;
+  is_all_time: boolean;
+  starts_at: string | null;
+  expires_at: string | null;
   is_active: boolean;
   is_currently_active: boolean;
   status: string;
@@ -313,8 +314,9 @@ export type NearbyOffer = {
   title: string;
   description: string;
   image: string | null;
-  starts_at: string;
-  expires_at: string;
+  is_all_time: boolean;
+  starts_at: string | null;
+  expires_at: string | null;
   is_active: boolean;
   is_currently_active: boolean;
   status: string;
@@ -326,9 +328,9 @@ export type NearbyOffer = {
   business: {
     id: string;
     name: string;
-    handle: string;
+    handle?: string;
     slug: string;
-    thumbnail: string | null;
+    thumbnail?: string | null;
     cover_image?: string | null;
     locality: string;
     city: { id: number; name: string; state: string };
@@ -340,6 +342,15 @@ export type NearbyOffersResponse = {
   results: NearbyOffer[] | null;
 };
 
+export type BusinessOffersResponse = {
+  business: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  results: BusinessDetailOffer[] | null;
+};
+
 export type DoctorSpecialty = {
   id: number;
   name: string;
@@ -347,6 +358,10 @@ export type DoctorSpecialty = {
   slug: string;
   aliases: string;
   body_part: string;
+  image?: string;
+  sort_order?: number;
+  is_active?: boolean;
+  is_featured?: boolean;
 };
 
 export type DoctorListItem = {
@@ -421,6 +436,18 @@ export type DoctorListResponse = {
   };
   specialty: DoctorSpecialty | null;
   results: DoctorListItem[] | null;
+};
+
+export type DoctorSpecialtiesResponse = {
+  pagination: {
+    count: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+    has_next: boolean;
+    has_previous: boolean;
+  };
+  results: DoctorSpecialty[] | null;
 };
 
 export type BusinessDoctorsResponse = Omit<DoctorListResponse, "specialty"> & {

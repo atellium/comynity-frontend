@@ -3,7 +3,6 @@ import {
 	CategorySlider,
 	HomeFooter,
 	HomeSearchLink,
-	HomeBannerSlider,
 	ListBusinessCta,
 	MobileHomeHeader,
 	NearbyBusinesses,
@@ -120,10 +119,11 @@ export default function Home() {
 			</h1>
 			<MobileHomeHeader />
 			<HomeSearchLink />
-			<PopularCategoriesGrid />
-			<CategorySlider title="Health & Medical" categorySlug="health-medical" />
+			{/* <PopularCategoriesGrid /> */}
 			<CategorySlider title="Shopping & Retail" categorySlug="shopping-retail" />
-			{/* <NearbyOffers /> */}
+			<CategorySlider title="Health & Medical" categorySlug="health-medical" />
+			<CategorySlider title="Home Services" categorySlug="home-services" />
+			<NearbyOffers />
 			<ListBusinessCta />
 			<NearbyBusinesses />
 			<HomeFooter />
