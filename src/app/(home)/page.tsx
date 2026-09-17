@@ -119,7 +119,7 @@ export default function Home() {
 			</h1>
 			<MobileHomeHeader />
 			<HomeSearchLink />
-			<section className="mx-auto w-full max-w-3xl px-2.5 pt-3" aria-label="Support">
+			{/* <section className="mx-auto w-full max-w-3xl px-2.5 pt-3" aria-label="Support">
 				<div className="relative aspect-[3/1] w-full overflow-hidden rounded-2xl bg-surface-tertiary shadow-sm dark:bg-surface-dark-tertiary">
 					<Image
 						src="/images/support.jpg"
@@ -130,7 +130,7 @@ export default function Home() {
 						className="object-cover"
 					/>
 				</div>
-			</section>
+			</section> */}
 			<CategorySlider title="Shopping & Retail" categorySlug="shopping-retail" />
 			<CategorySlider title="Health & Medical" categorySlug="health-medical" />
 			<CategorySlider title="Home Services" categorySlug="home-services" />
