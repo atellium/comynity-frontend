@@ -2,7 +2,7 @@ import { protectedApiClient } from "@/lib/api";
 import axios, { type AxiosResponse } from "axios";
 import type { BusinessCategoryOption, BusinessCityOption, BusinessGalleryImage, BusinessGalleryResponse, BusinessGalleryUpload, BusinessGalleryUploadTicket, BusinessHoursUpdatePayload, BusinessUpdatePayload, BusinessUploadsResponse, BusinessUploadTicketsResponse, OwnedBusinessInfoResponse, OwnedBusinessesResponse } from "./profile.types";
 import type { CatalogCategorySearchResponse, CatalogDetailResponse, CatalogGalleryImage, CatalogGalleryResponse, CatalogImageUpload, CatalogImageUploadTicket, CatalogPayload, DoctorPayload, DoctorSpecialtySearchResponse, ManagedDoctor, ManagedDoctorsResponse, OwnedProductResponse, OwnedProductsResponse, ProductCategorySearchResponse, ProductPayload } from "./catalog.types";
-import type { BusinessOfferResponse, BusinessOffersResponse } from "./offer.types";
+import type { BusinessOffer, BusinessOfferPayload, BusinessOfferResponse, BusinessOffersResponse } from "./offer.types";
 
 function normalizeOwnedBusinessInfo(business: NonNullable<OwnedBusinessInfoResponse["result"]>) {
   return {
@@ -352,16 +352,22 @@ export async function getBusinessOffers(slug: string) {
   return data.results ?? [];
 }
 
-export async function createBusinessOffer(slug: string, payload: FormData) {
-  const { data } = await protectedApiClient.post<BusinessOfferResponse>(businessOffersUrl(slug), payload);
-  if (!data.result) throw new Error("Offer creation returned no result.");
-  return data.result;
+function unwrapBusinessOffer(data: BusinessOfferResponse | BusinessOffer) {
+  if ("result" in data) {
+    if (!data.result) throw new Error("Offer request returned no result.");
+    return data.result;
+  }
+  return data;
 }
 
-export async function updateBusinessOffer(slug: string, offerId: string, payload: FormData) {
-  const { data } = await protectedApiClient.patch<BusinessOfferResponse>(`${businessOffersUrl(slug)}${encodeURIComponent(offerId)}/`, payload);
-  if (!data.result) throw new Error("Offer update returned no result.");
-  return data.result;
+export async function createBusinessOffer(slug: string, payload: BusinessOfferPayload) {
+  const { data } = await protectedApiClient.post<BusinessOfferResponse | BusinessOffer>(businessOffersUrl(slug), payload);
+  return unwrapBusinessOffer(data);
+}
+
+export async function updateBusinessOffer(slug: string, offerId: string, payload: Partial<BusinessOfferPayload>) {
+  const { data } = await protectedApiClient.patch<BusinessOfferResponse | BusinessOffer>(`${businessOffersUrl(slug)}${encodeURIComponent(offerId)}/`, payload);
+  return unwrapBusinessOffer(data);
 }
 
 export async function deleteBusinessOffer(slug: string, offerId: string) {

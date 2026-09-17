@@ -58,7 +58,12 @@ function CategorySliderTitle({ title, titleId }: { title: string; titleId: strin
 function CategorySliderSkeleton({ title, titleId }: { title: string; titleId: string }) {
 	return (
 		<section className="mx-auto w-full max-w-5xl py-4" aria-label={`Loading ${title}`}>
-			<CategorySliderTitle title={title} titleId={titleId} />
+			<div className="px-page">
+				<span
+					id={titleId}
+					className="block h-5 w-36 animate-pulse rounded bg-background-muted dark:bg-background-dark-muted"
+				/>
+			</div>
 			<div className="hide-scrollbar flex gap-3 overflow-x-auto bg-surface px-page py-3 dark:bg-surface-dark">
 				{Array.from({ length: 6 }, (_, index) => (
 					<div key={index} className="flex w-24 shrink-0 flex-col items-center gap-2 p-2">
