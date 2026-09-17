@@ -9,15 +9,20 @@ import type { BusinessNameDetail, NearbyOffer } from "@/features/businesses/busi
 import { useHydrated } from "@/lib/use-hydrated";
 import { useAppSelector } from "@/store/hooks";
 
-const HOMEPAGE_OFFER_LIMIT = 6;
+const HOMEPAGE_OFFER_LIMIT = 10;
+
+function routeSlug(value: string) {
+	return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
 
 export function NearbyOffers() {
 	const hydrated = useHydrated();
 	const { lat, lng, locality, city } = useAppSelector((state) => state.location);
 	const [selectedOffer, setSelectedOffer] = useState<NearbyOffer | null>(null);
+	const offersHref = city && locality ? `/${routeSlug(city)}/${routeSlug(locality)}/offers` : "/offers";
 	const query = useQuery({
 		queryKey: ["nearby-offers", "home", lat, lng],
-		queryFn: () => getNearbyOffers({ lat: lat!, lng: lng! }),
+		queryFn: () => getNearbyOffers({ lat: lat!, lng: lng!, pageSize: HOMEPAGE_OFFER_LIMIT }),
 		enabled: hydrated && lat !== null && lng !== null,
 	});
 
@@ -47,11 +52,11 @@ export function NearbyOffers() {
 					</p>
 				</div>
 				<Link
-					href="/offers"
-					className="shrink-0 text-xs font-extrabold text-brand hover:text-brand-800"
+					href={offersHref}
+					className="flex h-9 shrink-0 items-center justify-center gap-1 rounded-full border border-brand-200 bg-white px-3 text-xs font-extrabold text-brand hover:bg-brand-50 dark:border-brand-800 dark:bg-surface-dark"
 				>
-					Explore all
-					<i className="fa-solid fa-chevron-right ml-1 text-[9px]" aria-hidden="true" />
+					View all
+					<i className="fa-solid fa-chevron-right text-[9px]" aria-hidden="true" />
 				</Link>
 			</div>
 
@@ -98,7 +103,7 @@ function NearbyOfferCard({
 			aria-label={`View offer details for ${offer.title}`}
 		>
 			<i className="fa-solid fa-tag pointer-events-none absolute -bottom-9 -right-9 text-[6.5rem] text-brand opacity-10 dark:opacity-15" aria-hidden="true" />
-			<div className="flex min-w-0 flex-1 flex-col p-3 pl-5">
+			<div className="flex min-w-0 flex-1 flex-col py-3 pl-5 pr-10">
 				<h3 className="truncate text-sm font-extrabold text-foreground dark:text-foreground-dark">
 					{offer.title}
 				</h3>
@@ -108,8 +113,8 @@ function NearbyOfferCard({
 				<p className="mt-2 line-clamp-2 text-xs leading-4 font-medium text-foreground-muted dark:text-foreground-dark-muted">
 					{offer.description}
 				</p>
-				<i className="fa-solid fa-chevron-right mt-auto self-end text-xs text-brand dark:text-brand-300" aria-hidden="true" />
 			</div>
+			<i className="fa-solid fa-chevron-right absolute right-4 top-1/2 -translate-y-1/2 text-xs text-brand dark:text-brand-300" aria-hidden="true" />
 		</article>
 	);
 }
@@ -148,16 +153,26 @@ function OfferDetailsSheet({
 				</p>
 
 				<div className="mt-4 space-y-1.5 text-sm">
-					<p className="flex items-center gap-2 text-foreground dark:text-foreground-dark">
-						<i className="fa-solid fa-calendar-day w-4 text-center text-brand" aria-hidden="true" />
-						<span className="font-extrabold">Valid from:</span>
-						<span className="font-semibold">{formatDate(offer.starts_at)}</span>
-					</p>
-					<p className="flex items-center gap-2 text-foreground dark:text-foreground-dark">
-						<i className="fa-solid fa-calendar-check w-4 text-center text-brand" aria-hidden="true" />
-						<span className="font-extrabold">Valid until:</span>
-						<span className="font-semibold">{formatDate(offer.expires_at)}</span>
-					</p>
+					{offer.is_all_time ? (
+						<p className="flex items-center gap-2 text-foreground dark:text-foreground-dark">
+							<i className="fa-solid fa-infinity w-4 text-center text-brand" aria-hidden="true" />
+							<span className="font-extrabold">Validity:</span>
+							<span className="font-semibold">All-time offer</span>
+						</p>
+					) : (
+						<>
+							<p className="flex items-center gap-2 text-foreground dark:text-foreground-dark">
+								<i className="fa-solid fa-calendar-day w-4 text-center text-brand" aria-hidden="true" />
+								<span className="font-extrabold">Valid from:</span>
+								<span className="font-semibold">{formatDate(offer.starts_at)}</span>
+							</p>
+							<p className="flex items-center gap-2 text-foreground dark:text-foreground-dark">
+								<i className="fa-solid fa-calendar-check w-4 text-center text-brand" aria-hidden="true" />
+								<span className="font-extrabold">Valid until:</span>
+								<span className="font-semibold">{formatDate(offer.expires_at)}</span>
+							</p>
+						</>
+					)}
 				</div>
 
 				{offer.terms.length > 0 && (
@@ -253,7 +268,8 @@ function BusinessCardAction({ href, icon, label, brand = false, external = false
 	return href ? <a href={href} target={external ? "_blank" : undefined} rel={external ? "noreferrer" : undefined} onClick={onClick} className={className}>{content}</a> : <span aria-disabled="true" className={`${className} ${loading ? "animate-pulse" : "cursor-not-allowed opacity-40"}`}>{content}</span>;
 }
 
-function formatDate(value: string) {
+function formatDate(value: string | null) {
+	if (!value) return "Not set";
 	const date = new Date(value);
 	return Number.isNaN(date.getTime())
 		? value

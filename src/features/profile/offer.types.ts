@@ -3,8 +3,9 @@ export type BusinessOffer = {
   title: string;
   description: string;
   image: string | null;
-  starts_at: string;
-  expires_at: string;
+  is_all_time: boolean;
+  starts_at: string | null;
+  expires_at: string | null;
   is_active: boolean;
   is_currently_active: boolean;
   status: string;
@@ -20,4 +21,15 @@ export type BusinessOffersResponse = {
 
 export type BusinessOfferResponse = {
   result: BusinessOffer | null;
+};
+
+export type BusinessOfferPayload = {
+  title: string;
+  description: string;
+  is_all_time: boolean;
+  starts_at: string | null;
+  expires_at: string | null;
+  is_active: boolean;
+  sort_order: number;
+  terms: string[];
 };

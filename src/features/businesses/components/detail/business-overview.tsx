@@ -196,10 +196,7 @@ export function BusinessOverview({ business, slug }: { business: BusinessNameDet
             ))}
           </div>
         )}
-        <BusinessOffersSection
-          offers={business.offers}
-          businessThumbnail={business.media.cover_image ?? business.media.thumbnail}
-        />
+        <BusinessOffersSection businessSlug={slug} />
         {services.length > 0 && (
           <section className="mt-4" aria-labelledby="business-services-heading">
             <h2 id="business-services-heading" className="text-base font-extrabold tracking-tight text-foreground dark:text-foreground-dark">
